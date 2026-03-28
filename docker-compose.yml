@@ -75,10 +75,14 @@ services:
       - backend
     environment:
       DOMAIN: ${DOMAIN}
+      CERTBOT_PRIMARY_DOMAIN: ${CERTBOT_PRIMARY_DOMAIN}
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
 
 volumes:
   postgres_data:

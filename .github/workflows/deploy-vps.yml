@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
-          source: ".env,docker-compose.yml,nginx,GossipAI-backend,GossipAI-web"
+          source: ".env,docker-compose.yml,nginx,certbot,GossipAI-backend,GossipAI-web"
           target: ${{ secrets.VPS_DEPLOY_PATH }}
           strip_components: 0
           overwrite: true
