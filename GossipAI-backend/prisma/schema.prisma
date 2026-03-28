@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationStatus {
+  active
+  archived
+  deleted
+}
+
+enum MemoryMode {
+  off
+  summary_only
+  summary_plus_memory
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+enum MemoryItemType {
+  preference
+  pattern
+  boundary
+}
+
+enum SubscriptionPlan {
+  free
+  premium
+}
+
+enum PushDevicePlatform {
+  ios
+  android
+  web
+}
+
+enum NotificationScenario {
+  inactivity_3d
+  inactivity_7d
+  inactivity_10d
+  inactivity_15d
+  inactivity_30d
+  weekly_free_upsell
+  manual_broadcast
+}
+
+enum NotificationCampaignStatus {
+  draft
+  scheduled
+  sent
+  cancelled
+}
+
+enum NotificationDeliveryStatus {
+  queued
+  sent
+  failed
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  preferredLanguage String         @default("en")
+  lastAppActiveAt DateTime?
+  tokenVersion    Int              @default(0)
+  plan            SubscriptionPlan @default(free)
+  gender          String?
+  createdAt       DateTime         @default(now())
+  gossips         Gossip[]
+  refreshSessions RefreshSession[]
+  conversations   Conversation[]
+  memoryItems     MemoryItem[]
+  dailyUsages     DailyUsage[]
+  passwordResets  PasswordResetToken[]
+  pushDevices     PushDevice[]
+  notificationDeliveries NotificationDelivery[]
+
+  @@map("users")
+}
+
+model PushDevice {
+  id              String             @id @default(uuid())
+  userId          String
+  token           String             @unique
+  platform        PushDevicePlatform
+  appVersion      String?
+  deviceLanguage  String?
+  notificationsEnabled Boolean       @default(true)
+  lastSeenAt      DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries      NotificationDelivery[]
+
+  @@index([userId, platform])
+  @@map("push_devices")
+}
+
+model NotificationCampaign {
+  id                String                    @id @default(uuid())
+  scenario          NotificationScenario
+  status            NotificationCampaignStatus @default(draft)
+  titleByLanguage   Json
+  bodyByLanguage    Json
+  deepLink          String?
+  targetPlan        SubscriptionPlan?
+  scheduledAt       DateTime?
+  sentAt            DateTime?
+  createdBy         String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  deliveries        NotificationDelivery[]
+
+  @@index([scenario, status])
+  @@index([scheduledAt])
+  @@map("notification_campaigns")
+}
+
+model NotificationDelivery {
+  id                String                   @id @default(uuid())
+  campaignId        String
+  userId            String
+  deviceId          String
+  status            NotificationDeliveryStatus @default(queued)
+  sentAt            DateTime?
+  errorMessage      String?
+  createdAt         DateTime                 @default(now())
+  campaign          NotificationCampaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device            PushDevice               @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([campaignId, status])
+  @@index([deviceId, createdAt])
+  @@map("notification_deliveries")
+}
+
+model DailyUsage {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime @db.Date
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("daily_usages")
+}
+
+model Gossip {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  authorId  String
+  createdAt DateTime @default(now())
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("gossips")
+}
+
+model RefreshSession {
+  jti          String   @id
+  userId       String
+  tokenVersion Int
+  sessionId    String   @default(uuid())
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime @default(now())
+  revokedAt    DateTime?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([userId, revokedAt])
+  @@map("refresh_sessions")
+}
+
+model Conversation {
+  id              String             @id @default(uuid())
+  userId          String
+  title           String?
+  mode            String             @default("HELP_ME_REPLY")
+  style           String?
+  relation        String?
+  status          ConversationStatus @default(active)
+  memoryMode      MemoryMode         @default(summary_only)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages        Message[]
+  state           ConversationState?
+  sourceMemories  MemoryItem[]
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model Message {
+  id              String       @id @default(cuid())
+  conversationId  String
+  role            MessageRole
+  content         String?
+  contentRedacted String?
+  imageFileId     String?
+  tokensIn        Int?
+  tokensOut       Int?
+  createdAt       DateTime     @default(now())
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model ConversationState {
+  conversationId          String       @id
+  rollingSummary          String       @default("")
+  factsJson               Json?
+  openLoopsJson           Json?
+  safetyFlagsJson         Json?
+  lastSummarizedMessageId String?
+  updatedAt               DateTime     @updatedAt
+  conversation            Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("conversation_state")
+}
+
+model MemoryItem {
+  id                   String         @id @default(uuid())
+  userId               String
+  type                 MemoryItemType
+  content              String
+  expiresAt            DateTime?
+  sourceConversationId String?
+  createdAt            DateTime       @default(now())
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceConversation   Conversation?  @relation(fields: [sourceConversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, type])
+  @@index([sourceConversationId])
+  @@map("memory_items")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}

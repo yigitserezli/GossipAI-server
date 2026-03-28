@@ -1,0 +1,48 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Write runtime .env
+        shell: bash
+        run: |
+          cat <<'EOF' > .env
+          ${{ secrets.VPS_ENV_FILE }}
+          EOF
+
+      - name: Upload project files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          source: ".env,docker-compose.yml,nginx,GossipAI-backend,GossipAI-web"
+          target: ${{ secrets.VPS_DEPLOY_PATH }}
+          strip_components: 0
+          overwrite: true
+
+      - name: Build and restart services on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          script_stop: true
+          script: |
+            set -e
+            cd "${{ secrets.VPS_DEPLOY_PATH }}"
+            docker compose up -d --build --remove-orphans
+            docker compose ps

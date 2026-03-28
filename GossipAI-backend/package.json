@@ -1,0 +1,53 @@
+{
+  "name": "gossipai-backend",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"No tests yet\"",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "seed:notifications": "tsx scripts/seed-notification-campaigns.ts",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
+    "prisma:migrate:dev": "prisma migrate dev --name init_conversation_context"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Popov52/GossipAI-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Popov52/GossipAI-backend/issues"
+  },
+  "homepage": "https://github.com/Popov52/GossipAI-backend#readme",
+  "description": "",
+  "dependencies": {
+    "@openai/agents": "^0.4.12",
+    "@prisma/client": "^6.18.0",
+    "@types/pdfkit": "^0.17.5",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.7.0",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
+    "pdfkit": "^0.18.0",
+    "resend": "^6.9.4",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.2.3",
+    "prisma": "^6.18.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

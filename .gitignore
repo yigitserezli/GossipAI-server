@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.vps.example
+
+**/node_modules
+**/.next
+**/dist
+**/build
+
+.DS_Store
+.vscode/
