@@ -1,6 +1,24 @@
 #!/bin/sh
 set -eu
 
+echo "[backend] running enum migration (free → basic)..."
+# Rename the enum value if the old one still exists; safe to re-run.
+npx prisma db execute --stdin <<'SQL' || true
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_enum
+    WHERE enumlabel = 'free'
+      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'SubscriptionPlan')
+  ) THEN
+    ALTER TYPE "SubscriptionPlan" RENAME VALUE 'free' TO 'basic';
+    RAISE NOTICE 'Renamed SubscriptionPlan.free → basic';
+  ELSE
+    RAISE NOTICE 'SubscriptionPlan.free already renamed or does not exist';
+  END IF;
+END $$;
+SQL
+
 echo "[backend] waiting for database and applying schema..."
 
 RETRIES=30
