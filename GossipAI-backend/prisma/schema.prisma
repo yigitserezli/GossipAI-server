@@ -32,7 +32,7 @@ enum MemoryItemType {
 }
 
 enum SubscriptionPlan {
-  free
+  basic
   premium
 }
 
@@ -73,7 +73,7 @@ model User {
   preferredLanguage String         @default("en")
   lastAppActiveAt DateTime?
   tokenVersion    Int              @default(0)
-  plan            SubscriptionPlan @default(free)
+  plan            SubscriptionPlan @default(basic)
   gender          String?
   createdAt       DateTime         @default(now())
   gossips         Gossip[]

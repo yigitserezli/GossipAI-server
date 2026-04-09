@@ -1,4 +1,4 @@
-import { MemoryMode, MessageRole, type Prisma } from "@prisma/client";
+import { MemoryMode, MessageRole, SubscriptionPlan, type Prisma } from "@prisma/client";
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
@@ -76,6 +76,8 @@ const AGENTS_SDK_MODULE_NAME = "@openai/agents";
 const MAX_AGENT_HISTORY_MESSAGES = 24;
 
 type AgentMode = "HELP_ME_REPLY" | "HELP_ME_RESOLVE" | "SITUATION_ANALYSIS" | "SUMMARIZE";
+
+const PREMIUM_ONLY_MODES: Set<AgentMode> = new Set(["HELP_ME_RESOLVE", "SUMMARIZE"]);
 
 const AGENT_CONFIGS: Record<AgentMode, { name: string; instructions: string; reasoningEffort: string }> = {
   HELP_ME_REPLY: {
@@ -565,6 +567,25 @@ export const chatkitService = {
   },
 
   async sendMessage(userId: string, input: ChatkitMessageInput) {
+    const resolvedMode = resolveAgentMode(input);
+
+    if (PREMIUM_ONLY_MODES.has(resolvedMode)) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { plan: true },
+      });
+
+      if (user?.plan !== SubscriptionPlan.premium) {
+        throw new AppError(
+          `${resolvedMode} modu sadece Premium kullanıcılar için kullanılabilir.`,
+          403,
+          { mode: resolvedMode, plan: user?.plan ?? "basic" },
+          "PREMIUM_MODE_REQUIRED",
+          true,
+        );
+      }
+    }
+
     console.log("[sendMessage] ▶ Incoming request", {
       userId,
       conversationId: input.conversationId ?? "(new)",

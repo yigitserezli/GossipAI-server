@@ -8,7 +8,7 @@ type LocalizedContent = Record<string, string>;
 type CampaignSeed = {
   scenario: NotificationScenario;
   status: NotificationCampaignStatus;
-  targetPlan: "free" | "premium" | null;
+  targetPlan: "basic" | "premium" | null;
   titleByLanguage: LocalizedContent;
   bodyByLanguage: LocalizedContent;
   deepLink: string;
@@ -74,7 +74,7 @@ const CAMPAIGNS: CampaignSeed[] = [
   {
     scenario: "weekly_free_upsell",
     status: "draft",
-    targetPlan: "free",
+    targetPlan: "basic",
     titleByLanguage: autoTranslateTemplate("Premium ile daha hizli ilerle"),
     bodyByLanguage: autoTranslateTemplate("Bu hafta Premium ile gunluk 100 prompt ve tum modlar acik."),
     deepLink: "gossipai://subscription-plans",

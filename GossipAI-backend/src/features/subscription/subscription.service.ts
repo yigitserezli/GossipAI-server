@@ -12,11 +12,11 @@ export const subscriptionService = {
   getPublicPlans() {
     return [
       {
-        plan: SubscriptionPlan.free,
+        plan: SubscriptionPlan.basic,
         displayName: "Basic",
-        priceUsd: PLAN_PRICING_USD.free,
+        priceUsd: PLAN_PRICING_USD.basic,
         billingInterval: "month" as const,
-        dailyPromptLimit: PLAN_DAILY_LIMITS.free,
+        dailyPromptLimit: PLAN_DAILY_LIMITS.basic,
       },
       {
         plan: SubscriptionPlan.premium,
@@ -83,7 +83,7 @@ export const subscriptionService = {
 
     if (count >= limit) {
       throw new AppError(
-        `Gunluk ${limit} prompt limitine ulastiniz. ${plan === "free" ? "Premium plana yukselerek limiti 100'e cikarabilirsiniz." : "Yarin tekrar deneyebilirsiniz."}`,
+        `Gunluk ${limit} prompt limitine ulastiniz. ${plan === "basic" ? "Premium plana yukselerek limiti 100'e cikarabilirsiniz." : "Yarin tekrar deneyebilirsiniz."}`,
         429,
         { dailyLimit: limit, used: count, plan },
         "DAILY_LIMIT_EXCEEDED",

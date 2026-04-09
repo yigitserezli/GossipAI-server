@@ -480,7 +480,7 @@ export const openApiSpec = {
       SubscriptionPlan: {
         type: "object",
         properties: {
-          plan: { type: "string", enum: ["free", "premium"] },
+          plan: { type: "string", enum: ["basic", "premium"] },
           displayName: { type: "string", example: "Premium" },
           priceUsd: { type: "number", example: 9.99 },
           billingInterval: { type: "string", example: "month" },
@@ -494,14 +494,14 @@ export const openApiSpec = {
           count: { type: "integer" },
           limit: { type: "integer" },
           remaining: { type: "integer" },
-          plan: { type: "string", enum: ["free", "premium"] }
+          plan: { type: "string", enum: ["basic", "premium"] }
         },
         required: ["count", "limit", "remaining", "plan"]
       },
       UpgradeSubscriptionRequest: {
         type: "object",
         properties: {
-          plan: { type: "string", enum: ["free", "premium"] }
+          plan: { type: "string", enum: ["basic", "premium"] }
         },
         required: ["plan"]
       },
@@ -527,7 +527,7 @@ export const openApiSpec = {
           titleByLanguage: { type: "object", additionalProperties: { type: "string" } },
           bodyByLanguage: { type: "object", additionalProperties: { type: "string" } },
           deepLink: { type: "string" },
-          targetPlan: { type: "string", enum: ["free", "premium"] },
+          targetPlan: { type: "string", enum: ["basic", "premium"] },
           scheduledAt: { type: "string", format: "date-time" }
         },
         required: ["scenario", "titleByLanguage", "bodyByLanguage"]
@@ -1651,7 +1651,7 @@ export const openApiSpec = {
                       type: "object",
                       properties: {
                         id: { type: "string", format: "uuid" },
-                        plan: { type: "string", enum: ["free", "premium"] }
+                        plan: { type: "string", enum: ["basic", "premium"] }
                       },
                       required: ["id", "plan"]
                     }

@@ -214,7 +214,7 @@ const getFreeDevices = async () => {
     where: {
       notificationsEnabled: true,
       user: {
-        plan: "free",
+        plan: "basic",
       },
     },
     include: {
