@@ -2,6 +2,7 @@ import "dotenv/config";
 import app from "./app";
 import { env } from "./config/env";
 import { startNotificationScheduler, stopNotificationScheduler } from "./features/notifications/notifications.scheduler";
+import { startDailyInsightScheduler, stopDailyInsightScheduler } from "./features/daily-insight/daily-insight.scheduler";
 import { installOpenAIHttpLogger } from "./lib/openai-http-logger";
 import { prisma } from "./lib/prisma";
 
@@ -10,6 +11,7 @@ installOpenAIHttpLogger();
 const bootstrap = async () => {
   await prisma.$connect();
   startNotificationScheduler();
+  startDailyInsightScheduler();
 
   app.listen(env.PORT, () => {
     console.log(`Server is running on http://localhost:${env.PORT}`);
@@ -18,6 +20,7 @@ const bootstrap = async () => {
 
 const shutdown = async () => {
   stopNotificationScheduler();
+  stopDailyInsightScheduler();
   await prisma.$disconnect();
 };
 

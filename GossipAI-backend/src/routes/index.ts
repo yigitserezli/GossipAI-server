@@ -7,6 +7,7 @@ import conversationRouter from "../features/conversation/conversation.routes";
 import gossipRouter from "../features/gossip/gossip.routes";
 import notificationsRouter from "../features/notifications/notifications.routes";
 import subscriptionRouter from "../features/subscription/subscription.routes";
+import dailyInsightRouter from "../features/daily-insight/daily-insight.routes";
 
 const apiRouter = Router();
 
@@ -22,5 +23,6 @@ apiRouter.use("/conversations", conversationRouter);
 apiRouter.use("/subscription", subscriptionRouter);
 apiRouter.use("/notifications", notificationsRouter);
 apiRouter.use("/admin", adminRouter);
+apiRouter.use("/daily-insight", dailyInsightRouter);
 
 export default apiRouter;

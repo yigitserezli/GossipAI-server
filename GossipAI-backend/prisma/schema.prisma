@@ -265,3 +265,16 @@ model PasswordResetToken {
   @@index([userId])
   @@map("password_reset_tokens")
 }
+
+model DailyInsight {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  language  String
+  content   String
+  author    String?
+  createdAt DateTime @default(now())
+
+  @@unique([date, language])
+  @@index([date, language])
+  @@map("daily_insights")
+}
