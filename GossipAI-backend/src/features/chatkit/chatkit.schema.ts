@@ -21,7 +21,7 @@ export const chatkitRelationSchema = z.enum([
 ]);
 
 export const chatkitMessageSchema = z.object({
-  content: z.string().trim().min(1).max(4000),
+  content: z.string().trim().min(1).max(100_000),
   conversationId: z.string().trim().min(1).optional(),
   title: z.string().trim().min(1).max(120).optional(),
   memoryMode: z.nativeEnum(MemoryMode).optional(),
