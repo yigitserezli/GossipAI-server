@@ -383,38 +383,29 @@ const resolveAgentMode = (input: ChatkitMessageInput): AgentMode => {
   return "HELP_ME_REPLY";
 };
 
-const uploadImageToOpenAI = async (imageBase64: string): Promise<string> => {
-  const buffer = Buffer.from(imageBase64, "base64");
-  const boundary = `----FormBoundary${Date.now()}`;
-
-  const headerPart = Buffer.from(
-    `--${boundary}\r\nContent-Disposition: form-data; name="purpose"\r\n\r\nvision\r\n` +
-    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="image.jpg"\r\nContent-Type: image/jpeg\r\n\r\n`,
-    "utf8"
-  );
-  const footerPart = Buffer.from(`\r\n--${boundary}--\r\n`, "utf8");
-  const body = Buffer.concat([headerPart, buffer, footerPart]);
-
-  const response = await fetch("https://api.openai.com/v1/files", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      "Content-Type": `multipart/form-data; boundary=${boundary}`,
-      "Content-Length": String(body.length),
-    },
-    body,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new AppError("Failed to upload image to OpenAI", 502, { status: response.status, body: errorText });
+const toBase64DataUrl = (imageBase64: string): string => {
+  // Detect if it already has a data URL prefix
+  if (imageBase64.startsWith("data:")) {
+    return imageBase64;
   }
 
-  const data = (await response.json()) as { id: string };
-  return data.id;
+  // Sniff first bytes for MIME type
+  const header = imageBase64.slice(0, 20);
+  let mime = "image/jpeg";
+  if (header.startsWith("/9j/")) {
+    mime = "image/jpeg";
+  } else if (header.startsWith("iVBOR")) {
+    mime = "image/png";
+  } else if (header.startsWith("R0lGOD")) {
+    mime = "image/gif";
+  } else if (header.startsWith("UklGR")) {
+    mime = "image/webp";
+  }
+
+  return `data:${mime};base64,${imageBase64}`;
 };
 
-const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: AgentMode, imageFileId?: string): Promise<AgentResult> => {
+const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: AgentMode, imageDataUrl?: string): Promise<AgentResult> => {
   if (!env.OPENAI_WORKFLOW_ID) {
     throw new AppError("OPENAI_WORKFLOW_ID is not configured", 500);
   }
@@ -422,8 +413,7 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
   console.log("[runRosieAgent] ▶ Starting agent call", {
     mode,
     historyLength: history.length,
-    hasImage: !!imageFileId,
-    imageFileId: imageFileId ?? null,
+    hasImage: !!imageDataUrl,
     promptPreview: prompt.slice(0, 200)
   });
 
@@ -433,12 +423,12 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
     { type: "input_text", text: prompt }
   ];
 
-  if (imageFileId) {
-    console.log("[runRosieAgent] Attaching image file_id:", imageFileId);
+  if (imageDataUrl) {
+    console.log("[runRosieAgent] Attaching image as data URL (length:", imageDataUrl.length, ")");
     userContentItems.push({
       type: "input_image",
-      file_id: imageFileId
-    } as { type: "input_image"; file_id: string });
+      image_url: imageDataUrl
+    } as { type: "input_image"; image_url: string });
   }
 
   const conversationHistory: AgentInputItem[] = [
@@ -465,8 +455,7 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
   } catch (error) {
     console.error("[runRosieAgent] OpenAI agent execution failed", {
       mode,
-      hasImage: !!imageFileId,
-      imageFileId: imageFileId ?? null,
+      hasImage: !!imageDataUrl,
       historyLength: history.length,
       error: error instanceof Error
         ? { message: error.message, name: error.name, stack: error.stack, ...(error as any) }
@@ -635,11 +624,13 @@ export const chatkitService = {
 
       const currentSafetyFlags = normalizeSafetyFlags(conversation.state?.safetyFlagsJson ?? null);
 
-      // Upload image before saving to DB so we can persist the file_id
+      // Convert image to data URL for direct inline sending
+      let imageDataUrl: string | undefined;
       let imageFileId: string | undefined;
       if (input.imageBase64) {
-        imageFileId = await uploadImageToOpenAI(input.imageBase64);
-        console.log("[sendMessage] Image uploaded, file_id:", imageFileId);
+        imageDataUrl = toBase64DataUrl(input.imageBase64);
+        imageFileId = `inline_${Date.now()}`;
+        console.log("[sendMessage] Image prepared as data URL, size:", imageDataUrl.length);
       }
 
       const userMessage = await prisma.message.create({
@@ -652,7 +643,7 @@ export const chatkitService = {
         }
       });
 
-      const agentResult = await runRosieAgent(buildAgentInputText(input), historyItems, resolveAgentMode(input), imageFileId);
+      const agentResult = await runRosieAgent(buildAgentInputText(input), historyItems, resolveAgentMode(input), imageDataUrl);
 
       const assistantMessage = await prisma.message.create({
         data: {
