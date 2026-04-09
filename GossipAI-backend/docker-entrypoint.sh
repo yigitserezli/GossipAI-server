@@ -5,7 +5,7 @@ echo "[backend] waiting for database and applying schema..."
 
 RETRIES=30
 COUNT=0
-until npx prisma db push --skip-generate --accept-data-loss; do
+until npx prisma db push --skip-generate; do
   COUNT=$((COUNT + 1))
   if [ "$COUNT" -ge "$RETRIES" ]; then
     echo "[backend] prisma db push failed after $RETRIES attempts"
