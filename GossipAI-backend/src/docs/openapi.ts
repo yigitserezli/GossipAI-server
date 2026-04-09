@@ -16,7 +16,11 @@ export const openApiSpec = {
     { name: "Auth" },
     { name: "Gossips" },
     { name: "Conversations" },
-    { name: "ChatKit" }
+    { name: "ChatKit" },
+    { name: "Daily Insight" },
+    { name: "Subscription" },
+    { name: "Notifications" },
+    { name: "Admin" }
   ],
   components: {
     securitySchemes: {
@@ -100,7 +104,7 @@ export const openApiSpec = {
       ChatKitMessageRequest: {
         type: "object",
         properties: {
-          content: { type: "string", minLength: 1, maxLength: 4000 },
+          content: { type: "string", minLength: 1, maxLength: 100000 },
           conversationId: { type: "string" },
           title: { type: "string", minLength: 1, maxLength: 120 },
           memoryMode: {
@@ -414,6 +418,119 @@ export const openApiSpec = {
           data: { $ref: "#/components/schemas/AddMessageResponse" }
         },
         required: ["data"]
+      },
+      DailyInsight: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          date: { type: "string", format: "date" },
+          language: { type: "string", example: "en" },
+          content: { type: "string", example: "Sometimes the best things come when you least expect them." },
+          author: { type: "string", nullable: true, example: "Rumi" },
+          createdAt: { type: "string", format: "date-time" }
+        },
+        required: ["id", "date", "language", "content", "author", "createdAt"]
+      },
+      DataDailyInsightResponse: {
+        type: "object",
+        properties: {
+          data: { $ref: "#/components/schemas/DailyInsight" }
+        },
+        required: ["data"]
+      },
+      UpdateLanguageRequest: {
+        type: "object",
+        properties: {
+          language: {
+            type: "string",
+            enum: ["tr", "en", "de", "fr", "it", "es", "es-419", "ru", "zh", "ja", "ko", "uk", "pt"]
+          }
+        },
+        required: ["language"]
+      },
+      ForgotPasswordRequest: {
+        type: "object",
+        properties: {
+          email: { type: "string", format: "email" }
+        },
+        required: ["email"]
+      },
+      ResetPasswordRequest: {
+        type: "object",
+        properties: {
+          token: { type: "string", minLength: 6, maxLength: 6 },
+          password: { type: "string", minLength: 8 }
+        },
+        required: ["token", "password"]
+      },
+      VerifyPasscodeRequest: {
+        type: "object",
+        properties: {
+          passcode: { type: "string", pattern: "^\\d{6}$" }
+        },
+        required: ["passcode"]
+      },
+      EmailSummaryRequest: {
+        type: "object",
+        properties: {
+          conversationId: { type: "string", minLength: 1 }
+        },
+        required: ["conversationId"]
+      },
+      SubscriptionPlan: {
+        type: "object",
+        properties: {
+          plan: { type: "string", enum: ["free", "premium"] },
+          displayName: { type: "string", example: "Premium" },
+          priceUsd: { type: "number", example: 9.99 },
+          billingInterval: { type: "string", example: "month" },
+          dailyPromptLimit: { type: "integer", example: 100 }
+        },
+        required: ["plan", "displayName", "priceUsd", "billingInterval", "dailyPromptLimit"]
+      },
+      SubscriptionUsage: {
+        type: "object",
+        properties: {
+          count: { type: "integer" },
+          limit: { type: "integer" },
+          remaining: { type: "integer" },
+          plan: { type: "string", enum: ["free", "premium"] }
+        },
+        required: ["count", "limit", "remaining", "plan"]
+      },
+      UpgradeSubscriptionRequest: {
+        type: "object",
+        properties: {
+          plan: { type: "string", enum: ["free", "premium"] }
+        },
+        required: ["plan"]
+      },
+      RegisterDeviceRequest: {
+        type: "object",
+        properties: {
+          token: { type: "string", minLength: 20 },
+          platform: { type: "string", enum: ["ios", "android", "web"] },
+          appVersion: { type: "string" },
+          deviceLanguage: { type: "string" },
+          notificationsEnabled: { type: "boolean", default: true }
+        },
+        required: ["token", "platform"]
+      },
+      CreateCampaignRequest: {
+        type: "object",
+        properties: {
+          scenario: {
+            type: "string",
+            enum: ["inactivity_3d", "inactivity_7d", "inactivity_10d", "inactivity_15d", "inactivity_30d", "weekly_free_upsell", "manual_broadcast"]
+          },
+          status: { type: "string", enum: ["draft", "scheduled", "sent", "cancelled"] },
+          titleByLanguage: { type: "object", additionalProperties: { type: "string" } },
+          bodyByLanguage: { type: "object", additionalProperties: { type: "string" } },
+          deepLink: { type: "string" },
+          targetPlan: { type: "string", enum: ["free", "premium"] },
+          scheduledAt: { type: "string", format: "date-time" }
+        },
+        required: ["scenario", "titleByLanguage", "bodyByLanguage"]
       }
     }
   },
@@ -1071,6 +1188,893 @@ export const openApiSpec = {
           },
           502: {
             description: "Upstream OpenAI error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chatkit/email-summary": {
+      post: {
+        tags: ["ChatKit"],
+        summary: "Email conversation summary to the current user",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/EmailSummaryRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Summary email sent",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Summary sent to your email." }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chatkit/history": {
+      get: {
+        tags: ["ChatKit"],
+        summary: "List conversations (alias for /chatkit/conversations)",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 50, default: 20 }
+          }
+        ],
+        responses: {
+          200: {
+            description: "Conversation list",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DataConversationListResponse" }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chatkit/history/{id}": {
+      get: {
+        tags: ["ChatKit"],
+        summary: "Get conversation detail (alias for /chatkit/conversations/{id})",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" }
+          },
+          {
+            name: "lastMessages",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 20, default: 8 }
+          }
+        ],
+        responses: {
+          200: {
+            description: "Conversation detail",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DataConversationDetailResponse" }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          404: {
+            description: "Conversation not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chatkit/threads": {
+      get: {
+        tags: ["ChatKit"],
+        summary: "List conversations (alias for /chatkit/conversations)",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 50, default: 20 }
+          }
+        ],
+        responses: {
+          200: {
+            description: "Conversation list",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DataConversationListResponse" }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chatkit/threads/{id}": {
+      get: {
+        tags: ["ChatKit"],
+        summary: "Get conversation detail (alias for /chatkit/conversations/{id})",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" }
+          },
+          {
+            name: "lastMessages",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 20, default: 8 }
+          }
+        ],
+        responses: {
+          200: {
+            description: "Conversation detail",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DataConversationDetailResponse" }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          404: {
+            description: "Conversation not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/language": {
+      patch: {
+        tags: ["Auth"],
+        summary: "Update preferred language",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateLanguageRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Language updated",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MeResponse" }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Request password reset email",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ForgotPasswordRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Reset email sent (always returns success for security)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "If this email is registered, a reset link has been sent." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Reset password with token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Password updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Password updated successfully." }
+                  }
+                }
+              }
+            }
+          },
+          400: {
+            description: "Invalid or expired token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/admin/verify-passcode": {
+      post: {
+        tags: ["Auth"],
+        summary: "Verify admin passcode",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/VerifyPasscodeRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Passcode valid",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    valid: { type: "boolean", example: true }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Invalid passcode",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/daily-insight/today": {
+      get: {
+        tags: ["Daily Insight"],
+        summary: "Get today's daily insight",
+        description: "Returns the AI-generated daily insight for the requested language. Uses X-Language header to determine language.",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "X-Language",
+            in: "header",
+            required: false,
+            description: "Language code. Defaults to 'en' if not provided.",
+            schema: {
+              type: "string",
+              enum: ["tr", "en", "de", "fr", "it", "es", "es-419", "ru", "zh", "ja", "ko", "uk", "pt"],
+              default: "en"
+            }
+          }
+        ],
+        responses: {
+          200: {
+            description: "Today's insight",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DataDailyInsightResponse" }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscription/plans": {
+      get: {
+        tags: ["Subscription"],
+        summary: "List available subscription plans",
+        responses: {
+          200: {
+            description: "Plan list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/SubscriptionPlan" }
+                    }
+                  },
+                  required: ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscription/usage": {
+      get: {
+        tags: ["Subscription"],
+        summary: "Get current user's daily usage",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Usage data",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/SubscriptionUsage" }
+                  },
+                  required: ["data"]
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscription/upgrade": {
+      post: {
+        tags: ["Subscription"],
+        summary: "Upgrade or change subscription plan",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpgradeSubscriptionRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Plan updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string", format: "uuid" },
+                        plan: { type: "string", enum: ["free", "premium"] }
+                      },
+                      required: ["id", "plan"]
+                    }
+                  },
+                  required: ["data"]
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/devices": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Register or update a push device",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RegisterDeviceRequest" }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Device registered/updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/activity/ping": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Record user activity ping",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  deviceToken: { type: "string" }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: "Activity recorded",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/campaigns": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Create a notification campaign",
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateCampaignRequest" }
+            }
+          }
+        },
+        responses: {
+          201: {
+            description: "Campaign created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      get: {
+        tags: ["Notifications"],
+        summary: "List notification campaigns",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: "scenario", in: "query", required: false, schema: { type: "string" } },
+          { name: "status", in: "query", required: false, schema: { type: "string" } },
+          { name: "targetPlan", in: "query", required: false, schema: { type: "string" } },
+          { name: "limit", in: "query", required: false, schema: { type: "integer", default: 50 } },
+          { name: "offset", in: "query", required: false, schema: { type: "integer", default: 0 } }
+        ],
+        responses: {
+          200: {
+            description: "Campaign list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { type: "object" } }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/campaigns/{id}/stats": {
+      get: {
+        tags: ["Notifications"],
+        summary: "Get campaign delivery statistics",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          200: {
+            description: "Campaign stats",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/campaigns/{id}/deliveries": {
+      get: {
+        tags: ["Notifications"],
+        summary: "List campaign deliveries",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } },
+          { name: "status", in: "query", required: false, schema: { type: "string" } },
+          { name: "limit", in: "query", required: false, schema: { type: "integer", default: 100, maximum: 500 } }
+        ],
+        responses: {
+          200: {
+            description: "Delivery list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { type: "object" } }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/campaigns/{id}/deliveries/{deliveryId}/retry": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Retry a failed delivery",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } },
+          { name: "deliveryId", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          200: {
+            description: "Delivery retried",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/campaigns/{id}/dispatch": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Dispatch a campaign immediately",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          200: {
+            description: "Campaign dispatched",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/campaigns/{id}/cancel": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Cancel a scheduled campaign",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          200: {
+            description: "Campaign cancelled",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/automation/run": {
+      post: {
+        tags: ["Notifications"],
+        summary: "Manually trigger automation tick",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Automation tick result",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      get: {
+        tags: ["Admin"],
+        summary: "List all users (admin)",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "User list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { type: "object" } }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/devices": {
+      get: {
+        tags: ["Admin"],
+        summary: "List all push devices (admin)",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Device list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { type: "object" } }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: "Unauthorized",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" }
