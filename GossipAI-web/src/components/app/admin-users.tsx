@@ -11,7 +11,7 @@ const userSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
-  plan: z.enum(["free", "premium"]),
+  plan: z.enum(["basic", "premium"]),
   preferredLanguage: z.string(),
   lastAppActiveAt: z.string().nullable().optional(),
   createdAt: z.string(),
@@ -36,7 +36,7 @@ export function AdminUsers() {
   };
 
   const premiumCount = usersQuery.data?.filter((u) => u.plan === "premium").length ?? 0;
-  const freeCount = usersQuery.data?.filter((u) => u.plan === "free").length ?? 0;
+  const basicCount = usersQuery.data?.filter((u) => u.plan === "basic").length ?? 0;
   const totalPrompts = usersQuery.data?.reduce((acc, u) => acc + u.totalPrompts, 0) ?? 0;
 
   return (
@@ -55,10 +55,10 @@ export function AdminUsers() {
         </Card>
         <Card>
           <CardContent className="pt-5">
-            <p className="text-xs text-muted-foreground">Premium / Free</p>
+            <p className="text-xs text-muted-foreground">Premium / Basic</p>
             <p className="text-2xl font-bold">
               {premiumCount}
-              <span className="text-base font-normal text-muted-foreground"> / {freeCount}</span>
+              <span className="text-base font-normal text-muted-foreground"> / {basicCount}</span>
             </p>
           </CardContent>
         </Card>

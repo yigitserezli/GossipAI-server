@@ -29,7 +29,7 @@ const deviceSchema = z.object({
   user: z.object({
     id: z.string(),
     email: z.string(),
-    plan: z.enum(["free", "premium"]),
+    plan: z.enum(["basic", "premium"]),
   }),
 });
 

@@ -53,7 +53,7 @@ const scenarioOptions = [
 ] as const;
 
 const campaignStatusOptions = ["draft", "scheduled", "sent", "cancelled"] as const;
-const planOptions = ["free", "premium"] as const;
+const planOptions = ["basic", "premium"] as const;
 const deliveryStatusOptions = ["queued", "sent", "failed"] as const;
 
 const campaignSchema = z.object({
@@ -450,7 +450,7 @@ export function AdminNotifications() {
                 onChange={(e) => setForm((prev) => ({ ...prev, targetPlan: e.target.value as typeof form.targetPlan }))}
               >
                 <option value="all">all</option>
-                <option value="free">free</option>
+                <option value="basic">basic</option>
                 <option value="premium">premium</option>
               </select>
             </div>

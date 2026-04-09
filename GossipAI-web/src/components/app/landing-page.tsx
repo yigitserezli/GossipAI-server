@@ -505,7 +505,7 @@ const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
 };
 
 const publicPlanSchema = z.object({
-  plan: z.enum(["free", "premium"]),
+  plan: z.enum(["basic", "premium"]),
   displayName: z.string(),
   priceUsd: z.number(),
   billingInterval: z.string(),
@@ -623,8 +623,8 @@ export function LandingPage() {
     },
   });
 
-  const freePlan = useMemo(
-    () => plansQuery.data?.find((p) => p.plan === "free") ?? { priceUsd: 0, dailyPromptLimit: 5 },
+  const basicPlan = useMemo(
+    () => plansQuery.data?.find((p) => p.plan === "basic") ?? { priceUsd: 0, dailyPromptLimit: 5 },
     [plansQuery.data]
   );
   const premiumPlan = useMemo(
@@ -834,13 +834,13 @@ export function LandingPage() {
           <Card className="border-[#0f172a]/10 bg-white/90">
             <CardContent className="p-7">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#334155]">{copy.basicLabel}</p>
-              <p className="mt-3 text-3xl font-extrabold text-[#0f172a]">{formatUSD(freePlan.priceUsd)}</p>
+              <p className="mt-3 text-3xl font-extrabold text-[#0f172a]">{formatUSD(basicPlan.priceUsd)}</p>
               <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#64748b]">{copy.usdPerMonth}</p>
               <p className="mt-2 text-sm text-[#334155]">{copy.basicBlurb}</p>
               <div className="mt-6 space-y-2.5 text-sm text-[#1e293b]">
                 {[
                   copy.basicCoreFeature,
-                  `${copy.dailyPromptLabel}: ${freePlan.dailyPromptLimit}`,
+                  `${copy.dailyPromptLabel}: ${basicPlan.dailyPromptLimit}`,
                   copy.standardResponseFeature,
                   copy.platformFeature,
                 ].map((item) => (
