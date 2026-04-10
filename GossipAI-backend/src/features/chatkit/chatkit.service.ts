@@ -41,7 +41,6 @@ interface AgentInputItem {
   content: Array<
     | { type: "input_text"; text: string }
     | { type: "input_image"; image_url: string }
-    | { type: "input_image"; file_id: string }
   >;
 }
 
@@ -202,9 +201,8 @@ const toAgentInputItem = (message: {
   imageFileId?: string | null;
 }): AgentInputItem | null => {
   const text = (message.contentRedacted ?? message.content ?? "").trim();
-  const hasImage = message.role === MessageRole.user && !!message.imageFileId;
 
-  if (!text && !hasImage) {
+  if (!text) {
     return null;
   }
 
@@ -215,23 +213,12 @@ const toAgentInputItem = (message: {
         ? `PREVIOUS_ASSISTANT_REPLY: ${text}`
         : `PREVIOUS_SYSTEM_MESSAGE: ${text}`;
 
-  const content: AgentInputItem["content"] = [];
-
-  if (normalizedText) {
-    content.push({ type: "input_text", text: normalizedText });
-  }
-
-  if (hasImage && message.imageFileId) {
-    content.push({
-      type: "input_image",
-      file_id: message.imageFileId
-    } as { type: "input_image"; file_id: string });
-  }
-
+  // Note: We intentionally skip imageFileId from history messages.
+  // Images are only sent inline (as data URL) for the *current* message via runRosieAgent.
+  // Historical imageFileIds are placeholder markers, not valid OpenAI file IDs.
   return {
-    // Keep history in user-role inputs to avoid role-compatibility issues across agent runtimes.
     role: "user",
-    content
+    content: [{ type: "input_text", text: normalizedText }]
   };
 };
 
@@ -428,7 +415,7 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
     userContentItems.push({
       type: "input_image",
       image_url: imageDataUrl
-    } as { type: "input_image"; image_url: string });
+    });
   }
 
   const conversationHistory: AgentInputItem[] = [
