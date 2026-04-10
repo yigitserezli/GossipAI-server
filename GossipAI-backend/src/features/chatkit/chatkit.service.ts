@@ -399,6 +399,55 @@ const toBase64DataUrl = (imageBase64: string): string => {
   return `data:${mime};base64,${imageBase64}`;
 };
 
+/**
+ * Generate a factual description of an image using a lightweight vision call.
+ * This is NOT advice — it's a detailed transcript/description of what's visible
+ * (e.g. chat messages, screenshots, photos) so history can reference it later.
+ */
+const describeImage = async (imageDataUrl: string): Promise<string> => {
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 500,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Describe this image in detail. If it's a chat/messaging screenshot, transcribe ALL visible messages with sender names. If it's a photo, describe what's shown. Be factual and thorough. Respond in the same language as any text visible in the image."
+              },
+              {
+                type: "image_url",
+                image_url: { url: imageDataUrl, detail: "high" }
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      console.warn("[describeImage] Vision call failed:", response.status);
+      return "";
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    return data.choices?.[0]?.message?.content?.trim() ?? "";
+  } catch (err) {
+    console.warn("[describeImage] Error:", err);
+    return "";
+  }
+};
+
 const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: AgentMode, imageDataUrl?: string): Promise<AgentResult> => {
   if (!env.OPENAI_WORKFLOW_ID) {
     throw new AppError("OPENAI_WORKFLOW_ID is not configured", 500);
@@ -637,15 +686,17 @@ export const chatkitService = {
         }
       });
 
-      const agentResult = await runRosieAgent(buildAgentInputText(input), historyItems, resolveAgentMode(input), imageDataUrl);
+      // Run agent and image description in parallel to avoid extra latency
+      const [agentResult, imageDesc] = await Promise.all([
+        runRosieAgent(buildAgentInputText(input), historyItems, resolveAgentMode(input), imageDataUrl),
+        imageDataUrl ? describeImage(imageDataUrl) : Promise.resolve("")
+      ]);
 
-      // If the user sent an image, extract a short description from the agent's reply
-      // so future history items can reference what the image was about.
-      if (imageFileId && agentResult.content) {
-        const desc = agentResult.content.slice(0, 300).replace(/\n/g, " ").trim();
+      // Save the factual image description so history can reference what was in the image
+      if (imageFileId && imageDesc) {
         await prisma.message.update({
           where: { id: userMessage.id },
-          data: { imageDescription: desc }
+          data: { imageDescription: imageDesc }
         });
       }
 
