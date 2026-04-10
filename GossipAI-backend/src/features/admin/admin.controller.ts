@@ -31,7 +31,7 @@ export const updateUserPlan: RequestHandler = async (req, res) => {
   }
 
   const { plan } = updatePlanBodySchema.parse(req.body);
-  const userId = req.params.id;
+  const userId = String(req.params.id);
 
   const user = await adminService.updateUserPlan(req.user, userId, plan);
   res.status(200).json({ data: user });
