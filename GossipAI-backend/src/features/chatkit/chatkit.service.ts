@@ -160,8 +160,12 @@ const toNullableTokenCount = (value: unknown): number | null => {
   return Math.max(Math.trunc(value), 0);
 };
 
-const buildAgentInputText = (input: ChatkitMessageInput): string => {
+const buildAgentInputText = (input: ChatkitMessageInput, userLanguage?: string): string => {
   const lines = [`MODE: ${input.mode}`];
+
+  if (userLanguage) {
+    lines.push(`USER_LANGUAGE: ${userLanguage}`);
+  }
 
   if (input.style) {
     lines.push(`STYLE: ${input.style}`);
@@ -602,12 +606,12 @@ export const chatkitService = {
   async sendMessage(userId: string, input: ChatkitMessageInput) {
     const resolvedMode = resolveAgentMode(input);
 
-    if (PREMIUM_ONLY_MODES.has(resolvedMode)) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { plan: true },
-      });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, preferredLanguage: true },
+    });
 
+    if (PREMIUM_ONLY_MODES.has(resolvedMode)) {
       if (user?.plan !== SubscriptionPlan.premium) {
         throw new AppError(
           `${resolvedMode} modu sadece Premium kullanıcılar için kullanılabilir.`,
@@ -689,7 +693,7 @@ export const chatkitService = {
 
       // Run agent and image description in parallel to avoid extra latency
       const [agentResult, imageDesc] = await Promise.all([
-        runRosieAgent(buildAgentInputText(input), historyItems, resolveAgentMode(input), imageDataUrl),
+        runRosieAgent(buildAgentInputText(input, user?.preferredLanguage ?? undefined), historyItems, resolveAgentMode(input), imageDataUrl),
         imageDataUrl ? describeImage(imageDataUrl) : Promise.resolve("")
       ]);
 

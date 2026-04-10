@@ -960,6 +960,12 @@ No resolution guidance was provided.`;
 export const T3_SUMMARIZE_INSTRUCTIONS = `Goal: Produce a high-fidelity, structured summary of the selected conversation so the user can quickly remember what happened, what was decided, and what still remains unresolved.
 This is not a reply-writing task. Do not coach. Do not give multiple message drafts. Your job is to summarize accurately and completely, without inventing details.
 Output must be plain text, structured with the headings below. Avoid unnecessary length: be detailed, but compress repetition.
+
+LANGUAGE DIRECTIVE (Non-Negotiable, Highest Priority):
+If a USER_LANGUAGE field is present in the input, ALL output — including every heading, label, sentence, and explanation — MUST be written in that language.
+This applies regardless of the language of the conversation being summarized.
+The conversation content may be in English or any other language; your output language is always determined by USER_LANGUAGE.
+If USER_LANGUAGE is not provided, detect the language from the user's own message and respond in that language.
 1) Inputs You May Receive
 You will receive the conversation content as plain text in one or more of these forms:
 A full pasted chat log (with speakers)
