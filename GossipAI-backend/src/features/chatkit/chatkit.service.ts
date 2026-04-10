@@ -40,7 +40,7 @@ interface AgentInputItem {
   role: AgentRole;
   content: Array<
     | { type: "input_text"; text: string }
-    | { type: "input_image"; image_url: string }
+    | { type: "input_image"; image: string; detail?: string }
   >;
 }
 
@@ -470,7 +470,8 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
     console.log("[runRosieAgent] Attaching image as data URL (length:", imageDataUrl.length, ")");
     userContentItems.push({
       type: "input_image",
-      image_url: imageDataUrl
+      image: imageDataUrl,
+      detail: "high"
     });
   }
 
