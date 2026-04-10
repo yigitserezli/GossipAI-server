@@ -199,23 +199,30 @@ const toAgentInputItem = (message: {
   content: string | null;
   contentRedacted: string | null;
   imageFileId?: string | null;
+  imageDescription?: string | null;
 }): AgentInputItem | null => {
   const text = (message.contentRedacted ?? message.content ?? "").trim();
+  const hadImage = message.role === MessageRole.user && !!message.imageFileId;
 
-  if (!text) {
+  if (!text && !hadImage) {
     return null;
   }
 
-  const normalizedText =
+  let normalizedText =
     message.role === MessageRole.user
       ? text
       : message.role === MessageRole.assistant
         ? `PREVIOUS_ASSISTANT_REPLY: ${text}`
         : `PREVIOUS_SYSTEM_MESSAGE: ${text}`;
 
-  // Note: We intentionally skip imageFileId from history messages.
-  // Images are only sent inline (as data URL) for the *current* message via runRosieAgent.
-  // Historical imageFileIds are placeholder markers, not valid OpenAI file IDs.
+  // Append image context so the agent knows an image was part of this message
+  if (hadImage) {
+    const desc = message.imageDescription
+      ? `[📷 Image was attached: ${message.imageDescription}]`
+      : "[📷 An image was attached to this message]";
+    normalizedText = normalizedText ? `${normalizedText}\n${desc}` : desc;
+  }
+
   return {
     role: "user",
     content: [{ type: "input_text", text: normalizedText }]
@@ -631,6 +638,16 @@ export const chatkitService = {
       });
 
       const agentResult = await runRosieAgent(buildAgentInputText(input), historyItems, resolveAgentMode(input), imageDataUrl);
+
+      // If the user sent an image, extract a short description from the agent's reply
+      // so future history items can reference what the image was about.
+      if (imageFileId && agentResult.content) {
+        const desc = agentResult.content.slice(0, 300).replace(/\n/g, " ").trim();
+        await prisma.message.update({
+          where: { id: userMessage.id },
+          data: { imageDescription: desc }
+        });
+      }
 
       const assistantMessage = await prisma.message.create({
         data: {
