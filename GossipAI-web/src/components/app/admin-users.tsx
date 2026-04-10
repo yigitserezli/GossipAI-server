@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useApiQuery } from "@/lib/query/hooks";
+import { useApiMutation, useApiQuery } from "@/lib/query/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { showApiErrorToast, showApiSuccessToast } from "@/lib/toast/notify";
 
 const userSchema = z.object({
   id: z.string(),
@@ -22,12 +24,36 @@ const userSchema = z.object({
 
 const usersSchema = z.array(userSchema);
 
+const updatePlanResponseSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  plan: z.enum(["basic", "premium"]),
+});
+
 export function AdminUsers() {
+  const queryClient = useQueryClient();
+
   const usersQuery = useApiQuery({
     queryKey: ["admin", "users"],
     request: { method: "GET", url: "/admin/users" },
     schema: usersSchema,
     options: { meta: { errorMessage: "Kullanici listesi alinamadi." } },
+  });
+
+  const updatePlanMutation = useApiMutation({
+    schema: updatePlanResponseSchema,
+    request: ({ userId, plan }: { userId: string; plan: "basic" | "premium" }) => ({
+      method: "PATCH",
+      url: `/admin/users/${userId}/plan`,
+      data: { plan },
+    }),
+    options: {
+      onSuccess: async (response) => {
+        showApiSuccessToast(response, `Plan ${response.plan} olarak guncellendi.`);
+        await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      },
+      onError: (error) => showApiErrorToast(error, "Plan guncellenemedi"),
+    },
   });
 
   const formatDate = (value?: string | null) => {
@@ -107,7 +133,16 @@ export function AdminUsers() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.plan === "premium" ? "default" : "outline"}>
+                    <Badge
+                      variant={user.plan === "premium" ? "default" : "outline"}
+                      className="cursor-pointer select-none"
+                      onClick={() => {
+                        const newPlan = user.plan === "premium" ? "basic" : "premium";
+                        if (confirm(`${user.email} kullanicisinin plani "${newPlan}" olarak degistirilsin mi?`)) {
+                          updatePlanMutation.mutate({ userId: user.id, plan: newPlan });
+                        }
+                      }}
+                    >
                       {user.plan}
                     </Badge>
                   </TableCell>

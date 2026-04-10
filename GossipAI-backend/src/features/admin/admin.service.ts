@@ -82,4 +82,16 @@ export const adminService = {
       take: 500,
     });
   },
+
+  async updateUserPlan(adminUser: AuthContextUser, userId: string, plan: "basic" | "premium") {
+    assertDeveloper(adminUser);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { plan },
+      select: { id: true, email: true, plan: true },
+    });
+
+    return user;
+  },
 };
