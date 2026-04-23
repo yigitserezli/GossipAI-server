@@ -1,11 +1,16 @@
 "use client"
 
-import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const [theme, setTheme] = useState<ToasterProps["theme"]>("dark")
+
+  useEffect(() => {
+    const root = document.documentElement
+    setTheme(root.classList.contains("dark") ? "dark" : "light")
+  }, [])
 
   return (
     <Sonner

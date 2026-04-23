@@ -1,0 +1,47 @@
+EN
+Logo: Your chaos, decoded
+Subtitle: Turn gossip into insight
+
+TR
+Logo: Kaosunu çözümlüyoruz
+Subtitle: Dedikoduyu içgörüye dönüştür
+
+FR
+Logo: Décryptez votre chaos
+Subtitle: Transformez les confidences en clarté
+
+DE
+Logo: Dein Chaos, entschlüsselt
+Subtitle: Verwandle Gerede in Klarheit
+
+IT
+Logo: Il tuo caos, decifrato
+Subtitle: Trasforma il gossip in chiarezza
+
+ES
+Logo: Tu caos, descifrado
+Subtitle: Convierte el chisme en claridad
+
+ES-LATAM
+Logo: Tu caos, descifrado
+Subtitle: Convierte el chisme en claridad real
+
+PT
+Logo: Seu caos, decodificado
+Subtitle: Transforme fofoca em clareza
+
+RU
+Logo: Твой хаос, расшифрован
+Subtitle: Преврати сплетни в ясность
+
+ZH-CN
+Logo: 你的混乱，已解码
+Subtitle: 把八卦变成洞察
+
+JA
+Logo: あなたのカオスを、読み解く
+Subtitle: ゴシップを気づきに変える
+
+KO
+Logo: 너의 혼란을 풀어내다
+Subtitle: 가십을 통찰로 바꾸다

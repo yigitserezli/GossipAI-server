@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gossip AI - Your Enigmatic Confidant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-primary-container": "#552189",
+                  "surface-container": "#201f1f",
+                  "background": "#131313",
+                  "error-container": "#93000a",
+                  "on-tertiary": "#352d3e",
+                  "on-error": "#690005",
+                  "on-primary-fixed": "#2b0052",
+                  "primary-fixed-dim": "#dcb8ff",
+                  "on-tertiary-fixed-variant": "#4c4355",
+                  "on-secondary-fixed": "#201632",
+                  "on-primary-fixed-variant": "#5e2b93",
+                  "on-tertiary-fixed": "#201828",
+                  "surface-container-lowest": "#0e0e0e",
+                  "on-secondary": "#362b48",
+                  "tertiary-fixed-dim": "#cfc2d8",
+                  "secondary": "#d0c0e5",
+                  "tertiary-fixed": "#ebdef4",
+                  "primary": "#dcb8ff",
+                  "surface-tint": "#dcb8ff",
+                  "secondary-container": "#4d4160",
+                  "inverse-surface": "#e5e2e1",
+                  "secondary-fixed": "#ebdcff",
+                  "on-secondary-container": "#beafd3",
+                  "outline-variant": "#4b4451",
+                  "tertiary-container": "#b1a5ba",
+                  "surface-dim": "#131313",
+                  "primary-fixed": "#efdbff",
+                  "on-background": "#e5e2e1",
+                  "inverse-primary": "#7845ac",
+                  "on-secondary-fixed-variant": "#4d4160",
+                  "surface-container-low": "#1c1b1b",
+                  "surface-bright": "#3a3939",
+                  "on-surface": "#e5e2e1",
+                  "surface-variant": "#353534",
+                  "outline": "#978d9c",
+                  "on-error-container": "#ffdad6",
+                  "primary-container": "#c792ff",
+                  "surface-container-high": "#2a2a2a",
+                  "surface": "#131313",
+                  "inverse-on-surface": "#313030",
+                  "tertiary": "#cfc2d8",
+                  "on-surface-variant": "#cec3d3",
+                  "on-tertiary-container": "#433b4c",
+                  "secondary-fixed-dim": "#d0c0e5",
+                  "surface-container-highest": "#353534",
+                  "error": "#ffb4ab",
+                  "on-primary": "#460b7b"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "base": "4px",
+                  "xs": "8px",
+                  "xxl": "48px",
+                  "lg": "24px",
+                  "sm": "12px",
+                  "xl": "32px",
+                  "md": "16px",
+                  "container-padding": "20px"
+          },
+          "fontFamily": {
+                  "body-lg": [
+                          "Manrope"
+                  ],
+                  "label-caps": [
+                          "Manrope"
+                  ],
+                  "h2": [
+                          "Manrope"
+                  ],
+                  "h1": [
+                          "Manrope"
+                  ],
+                  "body-md": [
+                          "Manrope"
+                  ],
+                  "caption": [
+                          "Manrope"
+                  ]
+          },
+          "fontSize": {
+                  "body-lg": [
+                          "18px",
+                          {
+                                  "lineHeight": "28px",
+                                  "fontWeight": "400"
+                          }
+                  ],
+                  "label-caps": [
+                          "12px",
+                          {
+                                  "lineHeight": "16px",
+                                  "letterSpacing": "0.05em",
+                                  "fontWeight": "700"
+                          }
+                  ],
+                  "h2": [
+                          "24px",
+                          {
+                                  "lineHeight": "32px",
+                                  "letterSpacing": "-0.01em",
+                                  "fontWeight": "600"
+                          }
+                  ],
+                  "h1": [
+                          "32px",
+                          {
+                                  "lineHeight": "40px",
+                                  "letterSpacing": "-0.02em",
+                                  "fontWeight": "700"
+                          }
+                  ],
+                  "body-md": [
+                          "16px",
+                          {
+                                  "lineHeight": "24px",
+                                  "fontWeight": "400"
+                          }
+                  ],
+                  "caption": [
+                          "14px",
+                          {
+                                  "lineHeight": "20px",
+                                  "fontWeight": "500"
+                          }
+                  ]
+          }
+        },
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col">
+<!-- TopNavBar Component -->
+<nav class="fixed top-0 w-full z-50 border-b border-purple-500/20 shadow-2xl shadow-purple-900/10 bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-white/5">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-black tracking-tighter text-white">
+        Gossip AI
+      </div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-manrope text-sm font-medium tracking-wide text-[#C792FF] border-b-2 border-[#C792FF] pb-1 active:scale-95 transform transition-transform" href="#">Features</a>
+<a class="font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-white hover:text-[#C792FF] transition-all duration-300 active:scale-95 transform transition-transform" href="#">Use Cases</a>
+<a class="font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-white hover:text-[#C792FF] transition-all duration-300 active:scale-95 transform transition-transform" href="#">Insights</a>
+<a class="font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-white hover:text-[#C792FF] transition-all duration-300 active:scale-95 transform transition-transform" href="#">Support</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:block px-4 py-2 text-sm font-medium text-white hover:text-[#C792FF] transition-colors">Login</button>
+<button class="px-5 py-2.5 bg-[#C792FF] text-[#0A0A0A] text-sm font-bold rounded-full hover:bg-white transition-colors active:scale-95 transform">Get Access</button>
+</div>
+</div>
+</nav>
+<main class="flex-grow pt-24 pb-16">
+<!-- Hero Section -->
+<section class="relative min-h-[819px] flex items-center justify-center overflow-hidden px-container-padding">
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-container/10 via-background to-background pointer-events-none z-0"></div>
+<div class="relative z-10 max-w-4xl mx-auto text-center space-y-xl">
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary-container/30 bg-[#17111E] text-primary-container font-caption text-caption mb-md">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">psychology</span>
+          Now available in Beta
+        </div>
+<h1 class="font-h1 text-h1 md:text-[56px] md:leading-[64px] text-white tracking-tight">
+          Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-container to-secondary">Enigmatic Confidant.</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+          Get unparalleled AI advice on your social and professional circles. Decode subtext, navigate politics, and master the art of human interaction.
+        </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-sm pt-md">
+<button class="w-full sm:w-auto px-8 py-4 bg-primary-container text-background font-label-caps text-label-caps rounded-full hover:bg-white transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(199,146,255,0.3)]">
+            Get Early Access
+          </button>
+<button class="w-full sm:w-auto px-8 py-4 border border-outline-variant text-white font-label-caps text-label-caps rounded-full hover:bg-[#17111E] transition-all duration-300 active:scale-95">
+            View Live Demo
+          </button>
+</div>
+</div>
+</section>
+<!-- Pillars Section -->
+<section class="py-xxl px-container-padding max-w-7xl mx-auto relative z-10">
+<div class="text-center mb-xl">
+<h2 class="font-h2 text-h2 text-white">Two Distinct Realms of Insight</h2>
+</div>
+<div class="grid md:grid-cols-2 gap-lg">
+<!-- Pillar 1 -->
+<div class="bg-[#17111E] border border-[rgba(127,25,230,0.22)] rounded-2xl p-xl relative overflow-hidden group">
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-container/20 blur-3xl rounded-full"></div>
+<div class="w-12 h-12 bg-[#120B1A] border border-[rgba(127,25,230,0.3)] rounded-xl flex items-center justify-center mb-lg">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">diversity_1</span>
+</div>
+<h3 class="font-h2 text-[20px] text-white mb-sm">Personal Life Insights</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Decode mixed signals, resolve lingering conflicts, and understand the deeper dynamics of your friendships and romantic pursuits with clinical precision.
+          </p>
+</div>
+<!-- Pillar 2 -->
+<div class="bg-[#17111E] border border-[rgba(127,25,230,0.22)] rounded-2xl p-xl relative overflow-hidden group">
+<div class="absolute -bottom-24 -left-24 w-48 h-48 bg-secondary/10 blur-3xl rounded-full"></div>
+<div class="w-12 h-12 bg-[#120B1A] border border-[rgba(127,25,230,0.3)] rounded-xl flex items-center justify-center mb-lg">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">work</span>
+</div>
+<h3 class="font-h2 text-[20px] text-white mb-sm">Professional Strategy</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Navigate office politics, read the room in critical meetings, and optimize your career trajectory based on behavioral analysis of your peers and superiors.
+          </p>
+</div>
+</div>
+</section>
+<!-- Use Cases Bento Grid -->
+<section class="py-xxl px-container-padding max-w-7xl mx-auto relative z-10">
+<div class="flex items-center justify-between mb-xl">
+<h2 class="font-h2 text-h2 text-white">Applied Scenarios</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md auto-rows-[240px]">
+<!-- Case 1: Office Politics -->
+<div class="col-span-1 md:col-span-2 bg-[#17111E] border border-[rgba(127,25,230,0.22)] rounded-2xl p-lg flex flex-col justify-between group hover:border-primary-container/50 transition-colors">
+<div class="flex justify-between items-start">
+<span class="px-3 py-1 bg-[#120B1A] text-[#9B8DB0] font-caption text-[12px] rounded-full border border-outline-variant/30">Professional</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary-container transition-colors">arrow_outward</span>
+</div>
+<div>
+<h4 class="font-h2 text-[20px] text-white mb-xs">Navigating Office Politics</h4>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">"My manager cc'd his boss on my project update without telling me. What's the subtext here?"</p>
+</div>
+</div>
+<!-- Case 2: Complex Friendship -->
+<div class="col-span-1 bg-[#17111E] border border-[rgba(127,25,230,0.22)] rounded-2xl p-lg flex flex-col justify-between group hover:border-primary-container/50 transition-colors relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-b from-[#17111E] to-[#120B1A] opacity-50 pointer-events-none"></div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="px-3 py-1 bg-[#120B1A] text-[#9B8DB0] font-caption text-[12px] rounded-full border border-outline-variant/30">Platonic</span>
+</div>
+<div class="relative z-10">
+<h4 class="font-h2 text-[18px] text-white mb-xs">Complex Friendship</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant">Analyze shifts in communication patterns with long-term friends.</p>
+</div>
+</div>
+<!-- Case 3: Romantic Signals -->
+<div class="col-span-1 bg-[#17111E] border border-[rgba(127,25,230,0.22)] rounded-2xl p-lg flex flex-col justify-between group hover:border-primary-container/50 transition-colors">
+<div class="flex justify-between items-start">
+<span class="px-3 py-1 bg-[#120B1A] text-[#9B8DB0] font-caption text-[12px] rounded-full border border-outline-variant/30">Romantic</span>
+</div>
+<div>
+<h4 class="font-h2 text-[18px] text-white mb-xs">Decoding Signals</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant">Translate cryptic late-night texts into actionable insights.</p>
+</div>
+</div>
+<!-- Case 4: Negotiation -->
+<div class="col-span-1 md:col-span-2 bg-[#17111E] border border-[rgba(127,25,230,0.22)] rounded-2xl p-lg flex flex-col justify-between group hover:border-primary-container/50 transition-colors bg-[url('https://images.unsplash.com/photo-1634152962476-4b8a00e1915c?q=80&amp;w=800&amp;auto=format&amp;fit=crop')] bg-cover bg-center bg-blend-overlay" data-alt="abstract dark purple and black smooth gradient with subtle noise texture for background">
+<div class="flex justify-between items-start">
+<span class="px-3 py-1 bg-background/80 backdrop-blur-md text-[#9B8DB0] font-caption text-[12px] rounded-full border border-outline-variant/30">Strategic</span>
+<span class="material-symbols-outlined text-white/50 group-hover:text-white transition-colors">arrow_outward</span>
+</div>
+<div>
+<h4 class="font-h2 text-[20px] text-white mb-xs drop-shadow-md">High-Stakes Negotiation</h4>
+<p class="font-body-md text-body-md text-white/90 line-clamp-2 drop-shadow-md">Identify leverage points and behavioral tells during critical salary or contract discussions.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonial Section -->
+<section class="py-xxl px-container-padding max-w-4xl mx-auto relative z-10">
+<div class="bg-[#120B1A] border border-[rgba(127,25,230,0.15)] rounded-3xl p-xl md:p-xxl text-center relative">
+<span class="material-symbols-outlined text-4xl text-primary-container/40 absolute top-8 left-8 md:top-12 md:left-12" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+<p class="font-body-lg text-[20px] md:text-[24px] leading-relaxed text-white mb-lg relative z-10 italic">
+          "It feels less like an app and more like having a brilliant, slightly cynical psychologist living in my phone. Gossip AI correctly predicted my manager's reaction to my proposal before I even pitched it."
+        </p>
+<div class="flex items-center justify-center gap-sm">
+<div class="w-12 h-12 rounded-full bg-[#17111E] border border-primary-container/30 overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="professional headshot of a woman in her 30s with dark hair against a dark grey background with dramatic rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDde0GMOIDg5rOxfUK0MWV43qsgAFhBEC5Q1kTXTnEJxegFum9SeSvqv10lx_jiKs7xthRQu5cxWJvdQb2nhfCou7nlSTqxwwqUMvxGAvUEngUe8EnkmEskLEJRssOkON428ocFcjaNnuUYP8neWnLBBxo3Sklzf3Cxcn9_NMIcX-Ru-byQ7sYSNad3kimYZEt0dksutRRu3Lgtis7v1hO7iq4832oF-AtXx9-1fyRlWla7TSaqvjB2mFvxTb4CFldMId-37rP6DWM"/>
+</div>
+<div class="text-left">
+<div class="font-caption text-[14px] text-white font-bold">Elena R.</div>
+<div class="font-caption text-[12px] text-on-surface-variant">Director of Strategy</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Component -->
+<footer class="w-full border-t border-purple-900/30 bg-[#0A0A0A] border-t border-white/10 flat no shadows mt-auto">
+<div class="max-w-7xl mx-auto px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="text-lg font-bold text-white">
+        Gossip AI
+      </div>
+<div class="flex gap-6">
+<a class="font-manrope text-xs text-slate-500 hover:text-white transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Terms of Use</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-white transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-white transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Ethical AI Guide</a>
+<a class="font-manrope text-xs text-slate-500 hover:text-white transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Contact</a>
+</div>
+<div class="font-manrope text-xs text-slate-500">
+        © 2024 Gossip AI. Your enigmatic confidant in a pocket.
+      </div>
+</div>
+</footer>
+</body></html>

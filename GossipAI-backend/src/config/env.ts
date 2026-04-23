@@ -27,6 +27,8 @@ const booleanFromEnv = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const schedulerEnabledByDefault = process.env.NODE_ENV === "production";
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4321),
   DATABASE_URL: z.string().url(),
@@ -43,8 +45,12 @@ const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: optionalTrimmedString,
   FIREBASE_PRIVATE_KEY: optionalTrimmedString,
   EXPO_PUSH_ACCESS_TOKEN: optionalTrimmedString,
-  NOTIFICATION_SCHEDULER_ENABLED: booleanFromEnv.default(true),
-  NOTIFICATION_SCHEDULER_CRON: z.string().default("*/30 * * * *"),
+  NOTIFICATION_SCHEDULER_ENABLED: booleanFromEnv.default(schedulerEnabledByDefault),
+  NOTIFICATION_SCHEDULER_CRON: z.string().default("0 9,21 * * *"),
+  NOTIFICATION_SCHEDULER_TIMEZONE: z.string().default("UTC"),
+  DAILY_INSIGHT_SCHEDULER_ENABLED: booleanFromEnv.default(schedulerEnabledByDefault),
+  DAILY_INSIGHT_SCHEDULER_CRON: z.string().default("5 0 * * *"),
+  DAILY_INSIGHT_SCHEDULER_TIMEZONE: z.string().default("UTC"),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
