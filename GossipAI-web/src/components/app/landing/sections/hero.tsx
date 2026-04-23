@@ -15,7 +15,7 @@ export function LandingHero({
     <section className="relative z-10 flex min-h-0 flex-1 items-center overflow-hidden px-5 pb-6 pt-4 sm:px-8 lg:px-12">
       <div className="mx-auto grid h-full min-h-0 w-full max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="text-center lg:text-left">
-          <h1 className="editorial-heading reveal-up mx-auto max-w-4xl text-7xl font-extrabold leading-[0.88] sm:text-8xl lg:mx-0 lg:text-9xl">
+          <h1 className="editorial-heading reveal-up mx-auto max-w-4xl text-7xl font-extrabold leading-[1.02] sm:text-8xl sm:leading-[0.96] lg:mx-0 lg:text-9xl">
             <span className="bg-linear-to-r from-(--dt-on-surface) via-(--dt-primary) to-(--dt-primary-container) bg-clip-text text-transparent [text-shadow:0_0_30px_color-mix(in_srgb,var(--dt-primary-container)_50%,transparent)]">
               {sloganEntry?.logo ?? `${copy.heroLead} ${copy.heroHighlight}`}
             </span>
@@ -26,7 +26,7 @@ export function LandingHero({
           >
             {sloganEntry?.subtitle ?? copy.heroDescription}
           </p>
-          <div className="relative mt-4 h-[185px] sm:h-[210px] lg:h-[235px]">
+          <div className="relative mt-4 h-46.25 sm:h-52.5 lg:h-58.75">
             <span className="editorial-watermark-hero">GOSSIP</span>
             <div
               className="reveal-up absolute bottom-[clamp(18px,3vw,54px)] left-1/2 z-30 flex -translate-x-1/2 flex-wrap items-center justify-center gap-4 lg:left-0 lg:translate-x-0"

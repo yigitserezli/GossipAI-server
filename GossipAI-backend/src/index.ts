@@ -8,6 +8,18 @@ import { prisma } from "./lib/prisma";
 
 installOpenAIHttpLogger();
 
+const isDatabaseConnectionError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: string; message?: string };
+  return (
+    maybeError.code === "P1001" ||
+    (typeof maybeError.message === "string" && maybeError.message.includes("Can't reach database server"))
+  );
+};
+
 const bootstrap = async () => {
   await prisma.$connect();
   startNotificationScheduler();
@@ -34,5 +46,13 @@ process.on("SIGTERM", () => {
 
 void bootstrap().catch((error: unknown) => {
   console.error("Failed to start server", error);
+
+  if (isDatabaseConnectionError(error)) {
+    const dbHost = new URL(env.DATABASE_URL).host;
+    console.error(
+      `[DB Hint] Connection failed to ${dbHost}. If this is a remote DB, check IP whitelist/firewall rules for your current public IP.`
+    );
+  }
+
   process.exit(1);
 });

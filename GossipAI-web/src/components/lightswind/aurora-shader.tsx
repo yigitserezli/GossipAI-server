@@ -75,11 +75,15 @@ void main(){
   colors[1]=ColorStop(uColorStops[1],0.5);
   colors[2]=ColorStop(uColorStops[2],1.0);
 
+  float chromaNoise = snoise(vec2(uv.y * 2.2 + m.y * 0.2, (uTime * 0.16) + uv.x * 0.45));
+  float chromaDrift = sin((uTime * 0.22) + uv.y * 4.0 + m.x * 0.25) * 0.09;
+  float rampFactor = clamp(uv.x + chromaNoise * 0.12 + chromaDrift, 0.0, 1.0);
+
   vec3 rampColor;
-  COLOR_RAMP(colors, uv.x, rampColor);
+  COLOR_RAMP(colors, rampFactor, rampColor);
 
   // Apply noise to create the wave shape
-  float noise = snoise(vec2(uv.x * 3.0, uTime * 0.2 + m.x * 0.5));
+  float noise = snoise(vec2(uv.x * 3.0 + m.x * 0.25, uTime * 0.2 + m.y * 0.35));
   float waveHeight = uv.y - (noise * 0.15 * uAmplitude);
 
   // Fade the wave out at the bottom
@@ -98,7 +102,7 @@ void main(){
 `;
 
 export default function AuroraShader({
-  colorStops = ["#5227FF", "#7cff67", "#5227FF"],
+  colorStops = ["#5b2eff", "#ff5ad7", "#3f8bff"],
   amplitude = 1.0,
   blend = 0.5,
   speed = 1.0,

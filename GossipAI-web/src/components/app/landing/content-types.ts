@@ -44,6 +44,14 @@ export type LandingCopy = {
   heroHighlight: string;
   heroDescription: string;
   featureCards: Array<{ title: string; desc: string }>;
+  featuresRealmHeadingLine1: string;
+  featuresRealmHeadingLine2: string;
+  featuresRealmHeadingLine3: string;
+  featuresRealmDescription: string;
+  featuresRealmPersonalTitle: string;
+  featuresRealmPersonalDescription: string;
+  featuresRealmProfessionalTitle: string;
+  featuresRealmProfessionalDescription: string;
   valueTag: string;
   valueHeading: string;
   valueDescription: string;

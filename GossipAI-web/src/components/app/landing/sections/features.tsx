@@ -1,20 +1,20 @@
 import { BriefcaseBusiness, Users } from "lucide-react";
 import type { LandingCopy } from "@/components/app/landing/content";
 
-export function LandingFeaturesSection({ copy: _copy }: { copy: LandingCopy }) {
+export function LandingFeaturesSection({ copy }: { copy: LandingCopy }) {
   return (
     <section id="features" className="relative z-10 bg-[#020202] py-24 sm:py-28">
       <div className="mx-auto grid w-full max-w-7xl gap-16 px-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-        <div className="max-w-[32rem]">
-          <h2 className="font-serif text-6xl leading-[0.95] tracking-tight text-white sm:text-7xl">
-            <span>Two Distinct</span>
+        <div className="max-w-lg">
+          <h2 className="font-serif text-4xl leading-[1.02] tracking-tight text-white sm:text-5xl">
+            <span>{copy.featuresRealmHeadingLine1}</span>
             <br />
-            <span>Realms</span>
+            <span>{copy.featuresRealmHeadingLine2}</span>
             <br />
-            <span className="text-[#b689ff] italic">of Insight</span>
+            <span className="text-[#b689ff] italic">{copy.featuresRealmHeadingLine3}</span>
           </h2>
-          <p className="mt-10 text-[2rem] leading-relaxed text-white/58 sm:text-[2.2rem]">
-            Delve deep into the nuances of human interaction across every sphere of your life.
+          <p className="mt-6 text-base leading-relaxed text-white/58 sm:text-lg">
+            {copy.featuresRealmDescription}
           </p>
         </div>
 
@@ -24,13 +24,11 @@ export function LandingFeaturesSection({ copy: _copy }: { copy: LandingCopy }) {
               <Users className="h-8 w-8" />
             </div>
             <div>
-              <h3 className="font-serif text-5xl leading-[1.03] tracking-tight text-white sm:text-6xl">
-                Personal Life Insights
+              <h3 className="font-serif text-2xl leading-[1.1] tracking-tight text-white sm:text-3xl">
+                {copy.featuresRealmPersonalTitle}
               </h3>
-              <p className="mt-4 max-w-4xl text-[2rem] leading-relaxed text-white/58 sm:text-[2.2rem]">
-                Decode mixed signals, resolve lingering conflicts, and understand the deeper dynamics of your friendships
-                and romantic pursuits with clinical precision. Our algorithms analyze subtext that human intuition might
-                miss.
+              <p className="mt-3 max-w-4xl text-sm leading-relaxed text-white/58 sm:text-base">
+                {copy.featuresRealmPersonalDescription}
               </p>
             </div>
           </article>
@@ -40,12 +38,11 @@ export function LandingFeaturesSection({ copy: _copy }: { copy: LandingCopy }) {
               <BriefcaseBusiness className="h-8 w-8" />
             </div>
             <div>
-              <h3 className="font-serif text-5xl leading-[1.03] tracking-tight text-white sm:text-6xl">
-                Professional Strategy
+              <h3 className="font-serif text-2xl leading-[1.1] tracking-tight text-white sm:text-3xl">
+                {copy.featuresRealmProfessionalTitle}
               </h3>
-              <p className="mt-4 max-w-4xl text-[2rem] leading-relaxed text-white/58 sm:text-[2.2rem]">
-                Navigate office politics, read the room in critical meetings, and optimize your career trajectory based on
-                behavioral analysis of your peers and superiors. Anticipate moves before they happen.
+              <p className="mt-3 max-w-4xl text-sm leading-relaxed text-white/58 sm:text-base">
+                {copy.featuresRealmProfessionalDescription}
               </p>
             </div>
           </article>
