@@ -1,24 +1,10 @@
-import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
-import { AppError } from "../../shared/errors/app-error";
+import { assertAdminAccess } from "../../shared/auth/admin-access";
 import type { AuthContextUser } from "../../shared/types/auth";
-
-const parseDeveloperEmails = () =>
-  (env.DEVELOPER_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-export const assertDeveloper = (user: AuthContextUser) => {
-  const developerEmails = parseDeveloperEmails();
-  if (developerEmails.length === 0 || !developerEmails.includes(user.email.toLowerCase())) {
-    throw new AppError("Admin access required.", 403, undefined, "FORBIDDEN");
-  }
-};
 
 export const adminService = {
   async listUsers(user: AuthContextUser) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const users = await prisma.user.findMany({
       select: {
@@ -58,7 +44,7 @@ export const adminService = {
   },
 
   async listDevices(user: AuthContextUser) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     return prisma.pushDevice.findMany({
       select: {
@@ -84,7 +70,7 @@ export const adminService = {
   },
 
   async updateUserPlan(adminUser: AuthContextUser, userId: string, plan: "basic" | "premium") {
-    assertDeveloper(adminUser);
+    assertAdminAccess(adminUser);
 
     const user = await prisma.user.update({
       where: { id: userId },

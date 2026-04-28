@@ -27,8 +27,24 @@ interface InsightResponse {
   author?: string | null;
 }
 
+export const LANGUAGE_LABELS: Record<string, string> = {
+  en: "English",
+  tr: "Turkish",
+  de: "German",
+  fr: "French",
+  it: "Italian",
+  es: "Spanish",
+  "es-419": "Latin American Spanish",
+  ru: "Russian",
+  zh: "Chinese",
+  ja: "Japanese",
+  ko: "Korean",
+  uk: "Ukrainian",
+  pt: "Portuguese",
+};
+
 const generateForLanguage = async (language: string): Promise<{ content: string; author: string | null }> => {
-  const languageLabel = language === "tr" ? "Turkish" : "English";
+  const languageLabel = LANGUAGE_LABELS[language] ?? "English";
 
   const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
     method: "POST",

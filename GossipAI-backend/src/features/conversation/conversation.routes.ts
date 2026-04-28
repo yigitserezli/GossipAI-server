@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../shared/middlewares/authenticate";
+import { enforceDailyLimit } from "../../shared/middlewares/enforce-daily-limit";
 import { validateBody } from "../../shared/middlewares/validate-body";
 import {
   addConversationMessage,
@@ -22,7 +23,7 @@ conversationRouter.use(authenticate);
 conversationRouter.get("/", listConversations);
 conversationRouter.post("/", validateBody(createConversationSchema), createConversation);
 conversationRouter.get("/:id", getConversation);
-conversationRouter.post("/:id/messages", validateBody(createConversationMessageSchema), addConversationMessage);
+conversationRouter.post("/:id/messages", validateBody(createConversationMessageSchema), enforceDailyLimit, addConversationMessage);
 conversationRouter.patch("/:id/settings", validateBody(updateConversationSettingsSchema), updateConversationSettings);
 conversationRouter.delete("/:id", deleteConversation);
 

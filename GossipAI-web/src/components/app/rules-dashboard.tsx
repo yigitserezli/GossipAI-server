@@ -18,7 +18,6 @@ const navItems: { id: AdminSection; label: string; description: string }[] = [
 ];
 
 export function RulesDashboard() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const isAdminUnlocked = isAdminUnlockedInSession();
   const [activeSection, setActiveSection] = useState<AdminSection>("notifications");

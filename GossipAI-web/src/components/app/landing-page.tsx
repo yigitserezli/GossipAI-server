@@ -591,18 +591,19 @@ function StoreBadge({
 /* ─── Main component ─────────────────────────────────────── */
 
 export function LandingPage() {
-  const [language, setLanguage] = useState<LandingLanguage>("en");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const [language, setLanguage] = useState<LandingLanguage>(() => {
+    if (typeof window === "undefined") {
+      return "en";
+    }
 
     const stored = window.localStorage.getItem(LANDING_LANGUAGE_STORAGE_KEY);
-    if (!stored) return;
 
-    if ((LANDING_LANGUAGES as readonly string[]).includes(stored)) {
-      setLanguage(stored as LandingLanguage);
+    if ((LANDING_LANGUAGES as readonly string[]).includes(stored ?? "")) {
+      return stored as LandingLanguage;
     }
-  }, []);
+
+    return "en";
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;

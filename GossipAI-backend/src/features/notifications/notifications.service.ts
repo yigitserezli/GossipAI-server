@@ -7,9 +7,9 @@ import {
   type SubscriptionPlan,
   type User,
 } from "@prisma/client";
-import { env } from "../../config/env";
 import { sendPushToToken } from "../../lib/firebase-admin";
 import { prisma } from "../../lib/prisma";
+import { assertAdminAccess } from "../../shared/auth/admin-access";
 import { AppError } from "../../shared/errors/app-error";
 import type { AuthContextUser } from "../../shared/types/auth";
 import type {
@@ -19,19 +19,6 @@ import type {
   ListCampaignsQueryInput,
   RegisterDeviceInput,
 } from "./notifications.schema";
-
-const parseDeveloperEmails = () =>
-  (env.DEVELOPER_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-const assertDeveloper = (user: AuthContextUser) => {
-  const developerEmails = parseDeveloperEmails();
-  if (developerEmails.length === 0 || !developerEmails.includes(user.email.toLowerCase())) {
-    throw new AppError("Admin access required.", 403, undefined, "FORBIDDEN");
-  }
-};
 
 const scenarioCooldownDays: Record<NotificationScenario, number> = {
   inactivity_3d: 3,
@@ -265,7 +252,7 @@ export const notificationsService = {
   },
 
   async createCampaign(user: AuthContextUser, input: CreateCampaignInput) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const status = input.status ?? (input.scheduledAt ? NotificationCampaignStatus.scheduled : NotificationCampaignStatus.draft);
 
@@ -284,7 +271,7 @@ export const notificationsService = {
   },
 
   async dispatchCampaign(user: AuthContextUser, campaignId: string) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const campaign = await prisma.notificationCampaign.findUnique({ where: { id: campaignId } });
     if (!campaign) {
@@ -311,7 +298,7 @@ export const notificationsService = {
   },
 
   async listCampaigns(user: AuthContextUser, filters?: ListCampaignsQueryInput) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     return prisma.notificationCampaign.findMany({
       where: {
@@ -325,7 +312,7 @@ export const notificationsService = {
   },
 
   async getCampaignStats(user: AuthContextUser, campaignId: string) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const campaign = await prisma.notificationCampaign.findUnique({
       where: { id: campaignId },
@@ -374,7 +361,7 @@ export const notificationsService = {
   },
 
   async listCampaignDeliveries(user: AuthContextUser, campaignId: string, filters: ListCampaignDeliveriesQueryInput) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const campaign = await prisma.notificationCampaign.findUnique({
       where: { id: campaignId },
@@ -415,7 +402,7 @@ export const notificationsService = {
   },
 
   async cancelCampaign(user: AuthContextUser, campaignId: string) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const campaign = await prisma.notificationCampaign.findUnique({ where: { id: campaignId } });
     if (!campaign) {
@@ -438,7 +425,7 @@ export const notificationsService = {
   },
 
   async retryDelivery(user: AuthContextUser, campaignId: string, deliveryId: string) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
 
     const delivery = await prisma.notificationDelivery.findUnique({
       where: { id: deliveryId },
@@ -599,7 +586,7 @@ export const notificationsService = {
   },
 
   async runAutomationTickAsAdmin(user: AuthContextUser) {
-    assertDeveloper(user);
+    assertAdminAccess(user);
     return this.runAutomationTick();
   },
 };
