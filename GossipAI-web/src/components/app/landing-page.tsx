@@ -82,20 +82,22 @@ export function LandingPage({ slogans }: { slogans?: Record<string, SloganEntry>
         }).format(value);
 
     return (
-        <div style={cssVars} className="stitch-shell relative isolate overflow-x-hidden text-(--dt-on-bg)">
+        <div lang={language} style={cssVars} className="stitch-shell relative isolate min-h-screen flex flex-col overflow-x-hidden text-(--dt-on-bg)">
             <LandingBackground onReady={() => setIsAuroraReady(true)} />
             {isAuroraReady ? (
                 <>
                     <LandingNavbar copy={copy} language={language} onLanguageChange={setLanguage} />
-                    <div className="relative z-10 flex min-h-[calc(100vh-6.5rem)] flex-col">
-                        <LandingHero copy={copy} sloganEntry={sloganEntry} />
-                    </div>
-                    <LandingFeatureRealmSection copy={copy} />
-                    <LandingFeaturesSection copy={copy} />
-                    <LandingValueSection copy={copy} />
-                    <LandingHowItWorksSection copy={copy} />
-                    <LandingPricingSection copy={copy} basicPlan={basicPlan} premiumPlan={premiumPlan} formatUSD={formatUSD} />
-                    <LandingCtaSection copy={copy} />
+                    <main className="flex-1">
+                        <div className="relative z-10 flex min-h-[calc(100vh-6.5rem)] flex-1 flex-col">
+                            <LandingHero copy={copy} sloganEntry={sloganEntry} />
+                        </div>
+                        <LandingFeatureRealmSection copy={copy} />
+                        <LandingFeaturesSection copy={copy} />
+                        <LandingValueSection copy={copy} />
+                        <LandingHowItWorksSection copy={copy} />
+                        <LandingPricingSection copy={copy} basicPlan={basicPlan} premiumPlan={premiumPlan} formatUSD={formatUSD} />
+                        <LandingCtaSection copy={copy} />
+                    </main>
                     <LandingFooter copy={copy} />
                 </>
             ) : (

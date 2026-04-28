@@ -5,7 +5,7 @@ import { APPLE_PATH, PlayIcon, StoreBadge } from "@/components/app/landing/ui";
 
 export function LandingCtaSection({ copy }: { copy: LandingCopy }) {
   return (
-    <section className="relative z-10 overflow-hidden bg-(--dt-surface-low) py-20 text-(--dt-on-surface)">
+    <section className="relative z-10 overflow-hidden bg-[linear-gradient(180deg,color-mix(in_oklab,var(--dt-surface-low)_96%,black_4%)_0%,color-mix(in_oklab,var(--dt-surface-low)_92%,var(--dt-primary-container)_8%)_100%)] pb-6 pt-20 text-(--dt-on-surface) md:pb-8">
       <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-(--dt-primary)/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 left-10 h-56 w-56 rounded-full bg-(--dt-primary-container)/25 blur-3xl" />
       <div className="relative mx-auto max-w-3xl px-6 text-center">

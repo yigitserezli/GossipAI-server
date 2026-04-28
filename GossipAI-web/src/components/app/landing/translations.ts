@@ -22,7 +22,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     featureCards: [
       { title: "Help Me Reply", desc: "Mesajı yapıştır, doğru tonda net bir yanıt taslağı al." },
       { title: "Situation Analysis", desc: "Yanıtlamadan önce niyeti, tonu ve riskleri analiz et." },
-      { title: "Resolution Path", desc: "Gerilimi düşüren, ilerleten adım adım öneriler al." },
+      { title: "Help Me Resolve", desc: "Gerilimi düşürmek ve çözmek için adım adım net öneriler al." },
       { title: "Summarize", desc: "Uzun konuşmaları kısa özet ve aksiyona dönüştür." },
     ],
     featuresRealmHeadingLine1: "İki Farklı",
@@ -52,7 +52,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     howHeading: "Daha iyi yanıt için 3 adım",
     howSteps: [
       { step: "01", title: "Mesajı yapıştır", desc: "DM, SMS, e-posta fark etmez; gelen metni ekle." },
-      { step: "02", title: "Ajan modunu seç", desc: "Help Me Reply, Situation Analysis, Resolution Path veya Summarize." },
+      { step: "02", title: "Ajan modunu seç", desc: "Help Me Reply, Situation Analysis, Help Me Resolve veya Summarize." },
       { step: "03", title: "Güvenle gönder", desc: "Çıktıyı gözden geçir, düzenle ve gönder." },
     ],
     plansTag: "Planlar",
@@ -99,7 +99,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     featureCards: [
       { title: "Help Me Reply", desc: "Paste a message and get a clear response draft with the right tone." },
       { title: "Situation Analysis", desc: "Break down intent, tone, and risk before you react." },
-      { title: "Resolution Path", desc: "Follow practical next steps to de-escalate and move forward." },
+      { title: "Help Me Resolve", desc: "Get practical step-by-step guidance to de-escalate and resolve the issue." },
       { title: "Summarize", desc: "Turn long threads into concise summaries and action points." },
     ],
     featuresRealmHeadingLine1: "Two Distinct",
@@ -129,8 +129,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     howHeading: "Three steps to a better reply",
     howSteps: [
       { step: "01", title: "Paste the message", desc: "Copy whatever landed in your inbox." },
-      { step: "02", title: "Pick an agent mode", desc: "Choose Help Me Reply, Situation Analysis, Resolution Path, or Summarize." },
-      { step: "03", title: "Send with confidence", desc: "Review, edit if needed, and send." },
+      { step: "02", title: "Pick an agent mode", desc: "Choose Help Me Reply, Situation Analysis, Help Me Resolve, or Summarize." },
+      { step: "03", title: "Send with certainty", desc: "Review, edit if needed, and send." },
     ],
     plansTag: "Plans",
     plansHeading: "Choose the plan that fits your flow",
@@ -176,7 +176,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     featureCards: [
       { title: "Help Me Reply", desc: "Nachricht einfügen und einen klaren Antwortentwurf erhalten." },
       { title: "Situation Analysis", desc: "Absicht, Ton und Risiko erkennen, bevor du reagierst." },
-      { title: "Resolution Path", desc: "Praktische Schritte zur Deeskalation und Lösung." },
+      { title: "Help Me Resolve", desc: "Praktische Schritt-für-Schritt-Hilfe, um zu deeskalieren und das Problem zu lösen." },
       { title: "Summarize", desc: "Lange Threads in klare Zusammenfassungen verwandeln." },
     ],
     featuresRealmHeadingLine1: "Zwei klare",
@@ -206,7 +206,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     howHeading: "Drei Schritte zur besseren Antwort",
     howSteps: [
       { step: "01", title: "Nachricht einfügen", desc: "Text, DM oder Mail kopieren und einfügen." },
-      { step: "02", title: "Modus auswählen", desc: "Help Me Reply, Situation Analysis, Resolution Path oder Summarize." },
+      { step: "02", title: "Modus auswählen", desc: "Help Me Reply, Situation Analysis, Help Me Resolve oder Summarize." },
       { step: "03", title: "Sicher senden", desc: "Ergebnis prüfen, ggf. anpassen und senden." },
     ],
     plansTag: "Pläne",
@@ -253,7 +253,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     featureCards: [
       { title: "Help Me Reply", desc: "Collez un message et obtenez une réponse claire au bon ton." },
       { title: "Situation Analysis", desc: "Analysez intention, ton et risque avant de répondre." },
-      { title: "Resolution Path", desc: "Suivez des étapes concrètes pour apaiser et avancer." },
+      { title: "Help Me Resolve", desc: "Obtenez des étapes concrètes pour apaiser la situation et la résoudre." },
       { title: "Summarize", desc: "Transformez les longs échanges en résumé actionnable." },
     ],
     featuresRealmHeadingLine1: "Deux univers",
@@ -283,7 +283,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     howHeading: "Trois étapes pour mieux répondre",
     howSteps: [
       { step: "01", title: "Collez le message", desc: "DM, SMS, e-mail: collez simplement le contenu reçu." },
-      { step: "02", title: "Choisissez un mode", desc: "Help Me Reply, Situation Analysis, Resolution Path ou Summarize." },
+      { step: "02", title: "Choisissez un mode", desc: "Help Me Reply, Situation Analysis, Help Me Resolve ou Summarize." },
       { step: "03", title: "Envoyez avec confiance", desc: "Relisez, ajustez si besoin, puis envoyez." },
     ],
     plansTag: "Offres",
@@ -330,7 +330,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     featureCards: [
       { title: "Help Me Reply", desc: "Incolla un messaggio e ottieni una bozza chiara con il tono giusto." },
       { title: "Situation Analysis", desc: "Analizza intento, tono e rischio prima di rispondere." },
-      { title: "Resolution Path", desc: "Segui passi pratici per ridurre tensioni e andare avanti." },
+      { title: "Help Me Resolve", desc: "Ricevi passi pratici, passo dopo passo, per ridurre la tensione e risolvere il problema." },
       { title: "Summarize", desc: "Trasforma thread lunghi in sintesi chiare e azionabili." },
     ],
     featuresRealmHeadingLine1: "Due aree",
@@ -360,7 +360,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     howHeading: "Tre passi per una risposta migliore",
     howSteps: [
       { step: "01", title: "Incolla il messaggio", desc: "DM, SMS o email: incolla il testo ricevuto." },
-      { step: "02", title: "Scegli una modalita", desc: "Help Me Reply, Situation Analysis, Resolution Path o Summarize." },
+      { step: "02", title: "Scegli una modalita", desc: "Help Me Reply, Situation Analysis, Help Me Resolve o Summarize." },
       { step: "03", title: "Invia con sicurezza", desc: "Rivedi, modifica se serve, poi invia." },
     ],
     plansTag: "Piani",
@@ -407,7 +407,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     featureCards: [
       { title: "Help Me Reply", desc: "Pega un mensaje y recibe un borrador claro con el tono correcto." },
       { title: "Situation Analysis", desc: "Analiza intencion, tono y riesgo antes de responder." },
-      { title: "Resolution Path", desc: "Sigue pasos practicos para desescalar y avanzar." },
+      { title: "Help Me Resolve", desc: "Recibe pasos prácticos, uno a uno, para desescalar y resolver el problema." },
       { title: "Summarize", desc: "Convierte hilos largos en resumenes accionables." },
     ],
     featuresRealmHeadingLine1: "Dos ambitos",
@@ -437,7 +437,7 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     howHeading: "Tres pasos para una mejor respuesta",
     howSteps: [
       { step: "01", title: "Pega el mensaje", desc: "DM, SMS o correo: pega el texto recibido." },
-      { step: "02", title: "Elige un modo", desc: "Help Me Reply, Situation Analysis, Resolution Path o Summarize." },
+      { step: "02", title: "Elige un modo", desc: "Help Me Reply, Situation Analysis, Help Me Resolve o Summarize." },
       { step: "03", title: "Envia con confianza", desc: "Revisa, ajusta si hace falta y envia." },
     ],
     plansTag: "Planes",

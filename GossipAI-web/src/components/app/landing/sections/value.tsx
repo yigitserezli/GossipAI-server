@@ -30,7 +30,7 @@ export function LandingValueSection({ copy }: { copy: LandingCopy }) {
                                 {copy.valueTag}
                             </p>
                         </div>
-                        <h3 className="mt-4 font-[var(--font-heading-editorial)] text-3xl leading-[1.08] font-extrabold tracking-[0.02em] text-(--dt-on-surface) sm:text-4xl">
+                        <h3 className="editorial-heading mt-4 text-3xl leading-[1.08] font-extrabold tracking-[0.02em] text-(--dt-on-surface) sm:text-4xl">
                             {renderEditorialHeading(copy.valueHeading)}
                         </h3>
                         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-(--dt-on-surface-variant)">{copy.valueDescription}</p>
@@ -54,7 +54,7 @@ export function LandingValueSection({ copy }: { copy: LandingCopy }) {
                                 {copy.missionTag}
                             </p>
                         </div>
-                        <h3 className="mt-4 font-[var(--font-heading-editorial)] text-3xl leading-[1.08] font-extrabold tracking-[0.02em] text-(--dt-on-surface) sm:text-4xl">
+                        <h3 className="editorial-heading mt-4 text-3xl leading-[1.08] font-extrabold tracking-[0.02em] text-(--dt-on-surface) sm:text-4xl">
                             {renderEditorialHeading(copy.missionHeading)}
                         </h3>
                         <p className="mt-3 text-sm leading-relaxed text-(--dt-on-surface-variant)">{copy.missionDescription}</p>
