@@ -6,7 +6,7 @@
 
 :root {
   --font-app-sans:
-    "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    var(--font-body-editorial), "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-app-mono:
     "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", monospace;
   --background:
@@ -80,7 +80,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-app-sans);
   --font-mono: var(--font-app-mono);
-  --font-heading: var(--font-app-sans);
+  --font-heading: var(--font-heading-editorial), "Impact", "Arial Black", sans-serif;
   --color-sidebar-ring:
     var(--sidebar-ring);
   --color-sidebar-border:
@@ -157,6 +157,111 @@
 
 body {
   font-family: var(--font-app-sans);
+}
+
+.editorial-shell {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(0, 112, 243, 0.18), transparent 32%),
+    radial-gradient(circle at 85% 20%, rgba(0, 194, 168, 0.18), transparent 30%),
+    linear-gradient(165deg, #f8f5ee 0%, #f0f5ff 48%, #eefcf9 100%);
+}
+
+.stitch-shell {
+  background-color: var(--dt-bg);
+  background-image:
+    radial-gradient(circle at 8% -12%, color-mix(in srgb, var(--dt-primary-container) 25%, transparent), transparent 38%),
+    radial-gradient(circle at 92% 28%, color-mix(in srgb, var(--dt-primary-container) 18%, transparent), transparent 34%);
+  color: var(--dt-on-bg);
+}
+
+.stitch-glass {
+  background: color-mix(in srgb, var(--dt-surface) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dt-primary-container) 26%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.editorial-watermark-hero {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-heading-editorial), "Impact", "Arial Black", sans-serif;
+  font-size: clamp(8.2rem, 23vw, 16.5rem);
+  letter-spacing: 0.08em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--dt-primary-container, #c792ff) 48%, transparent);
+  opacity: 0.44;
+  text-shadow: 0 0 32px color-mix(in srgb, var(--dt-primary-container, #c792ff) 34%, transparent);
+  user-select: none;
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .editorial-watermark-hero {
+    left: 0;
+    transform: none;
+  }
+}
+
+.editorial-heading {
+  font-family: var(--font-heading-editorial), "Impact", "Arial Black", sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.editorial-kicker {
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.reveal-up {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: reveal-up 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+}
+
+.float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.tilt-card {
+  transition: transform 340ms ease, box-shadow 340ms ease;
+}
+
+.tilt-card:hover {
+  transform: translateY(-6px) rotate(-0.65deg);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+}
+
+@keyframes reveal-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up,
+  .float-slow,
+  .tilt-card {
+    animation: none;
+    transform: none;
+    transition: none;
+    opacity: 1;
+  }
 }
 
 .dark {

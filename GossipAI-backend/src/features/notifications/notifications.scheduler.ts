@@ -30,16 +30,45 @@ export const startNotificationScheduler = () => {
     return;
   }
 
-  schedulerTask = cron.schedule(env.NOTIFICATION_SCHEDULER_CRON, async () => {
-    try {
-      const result = await notificationsService.runAutomationTick();
-      console.log("[notifications] Automation tick completed", summarizeTick(result));
-    } catch (error) {
-      console.error("[notifications] Automation tick failed", error);
+  schedulerTask = cron.schedule(
+    env.NOTIFICATION_SCHEDULER_CRON,
+    async () => {
+      const startedAt = Date.now();
+      try {
+        const result = await notificationsService.runAutomationTick();
+        console.log("[notifications] Automation tick completed", {
+          ...summarizeTick(result),
+          durationMs: Date.now() - startedAt,
+        });
+      } catch (error) {
+        console.error("[notifications] Automation tick failed", error);
+      }
+    },
+    {
+      name: "notifications-automation",
+      noOverlap: true,
+      timezone: env.NOTIFICATION_SCHEDULER_TIMEZONE,
     }
+  );
+
+  schedulerTask.on("execution:missed", (context) => {
+    console.warn("[notifications] Scheduler missed execution", {
+      expectedAt: context.date.toISOString(),
+      expectedAtLocal: context.dateLocalIso,
+      triggeredAt: context.triggeredAt.toISOString(),
+    });
   });
 
-  console.log(`[notifications] Scheduler started with cron "${env.NOTIFICATION_SCHEDULER_CRON}".`);
+  schedulerTask.on("execution:overlap", (context) => {
+    console.warn("[notifications] Scheduler overlap prevented", {
+      expectedAt: context.date.toISOString(),
+      triggeredAt: context.triggeredAt.toISOString(),
+    });
+  });
+
+  console.log(
+    `[notifications] Scheduler started with cron "${env.NOTIFICATION_SCHEDULER_CRON}" (tz=${env.NOTIFICATION_SCHEDULER_TIMEZONE}, noOverlap=true).`
+  );
 };
 
 export const stopNotificationScheduler = () => {
