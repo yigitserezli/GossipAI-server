@@ -55,5 +55,6 @@ jobs:
             set -e
             cd "${{ secrets.VPS_DEPLOY_PATH }}"
             docker compose up -d --build --remove-orphans
+            docker compose exec -T backend npx prisma migrate resolve --applied 00000000000000_baseline || true
             docker compose exec -T backend npx prisma migrate deploy
             docker compose ps

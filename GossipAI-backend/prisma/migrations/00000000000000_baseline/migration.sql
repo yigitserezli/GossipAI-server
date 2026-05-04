@@ -1,0 +1,3 @@
+-- Baseline migration: represents the existing database schema before migration tracking began.
+-- This file intentionally left empty because the tables already exist in production.
+-- Marked as applied via: prisma migrate resolve --applied 00000000000000_baseline
