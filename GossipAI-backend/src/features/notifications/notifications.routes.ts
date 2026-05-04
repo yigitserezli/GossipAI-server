@@ -2,6 +2,7 @@ import { Router } from "express";
 import { validateBody } from "../../shared/middlewares/validate-body";
 import { authenticateOrAdminPasscode } from "./notifications-auth";
 import {
+  autoTranslateCampaign,
   cancelCampaign,
   createCampaign,
   dispatchCampaign,
@@ -15,6 +16,7 @@ import {
 } from "./notifications.controller";
 import {
   activityPingSchema,
+  autoTranslateSchema,
   createCampaignSchema,
   registerDeviceSchema,
 } from "./notifications.schema";
@@ -25,6 +27,7 @@ notificationsRouter.use(authenticateOrAdminPasscode);
 
 notificationsRouter.post("/devices", validateBody(registerDeviceSchema), registerPushDevice);
 notificationsRouter.post("/activity/ping", validateBody(activityPingSchema), pingActivity);
+notificationsRouter.post("/campaigns/auto-translate", validateBody(autoTranslateSchema), autoTranslateCampaign);
 notificationsRouter.post("/campaigns", validateBody(createCampaignSchema), createCampaign);
 notificationsRouter.get("/campaigns", listCampaigns);
 notificationsRouter.get("/campaigns/:id/stats", getCampaignStats);

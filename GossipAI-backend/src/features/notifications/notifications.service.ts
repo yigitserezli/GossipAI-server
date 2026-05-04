@@ -12,8 +12,10 @@ import { prisma } from "../../lib/prisma";
 import { assertAdminAccess } from "../../shared/auth/admin-access";
 import { AppError } from "../../shared/errors/app-error";
 import type { AuthContextUser } from "../../shared/types/auth";
+import { env } from "../../config/env";
 import type {
   ActivityPingInput,
+  AutoTranslateInput,
   CreateCampaignInput,
   ListCampaignDeliveriesQueryInput,
   ListCampaignsQueryInput,
@@ -588,5 +590,96 @@ export const notificationsService = {
   async runAutomationTickAsAdmin(user: AuthContextUser) {
     assertAdminAccess(user);
     return this.runAutomationTick();
+  },
+
+  async autoTranslateCampaign(user: AuthContextUser, input: AutoTranslateInput) {
+    assertAdminAccess(user);
+
+    const LANGUAGES = [
+      { code: "tr", name: "Turkish" },
+      { code: "de", name: "German" },
+      { code: "fr", name: "French" },
+      { code: "it", name: "Italian" },
+      { code: "es", name: "Spanish (Spain)" },
+      { code: "ru", name: "Russian" },
+      { code: "zh", name: "Chinese (Simplified)" },
+      { code: "ja", name: "Japanese" },
+      { code: "ko", name: "Korean" },
+      { code: "uk", name: "Ukrainian" },
+      { code: "pt", name: "Portuguese" },
+      { code: "es-419", name: "Spanish (Latin America)" },
+    ];
+
+    const languageList = LANGUAGES.map((l) => `${l.code} (${l.name})`).join(", ");
+
+    const prompt = [
+      `You are a professional app localization assistant.`,
+      `Translate the following push notification title and body from English into these languages: ${languageList}.`,
+      input.titleTr ? `For Turkish (tr), use the provided translation exactly: Title="${input.titleTr}"${input.bodyTr ? `, Body="${input.bodyTr}"` : ""}` : "",
+      ``,
+      `English title: ${input.titleEn}`,
+      `English body: ${input.bodyEn}`,
+      ``,
+      `Return ONLY a valid JSON object with this exact structure (no markdown, no explanation):`,
+      `{`,
+      `  "titleByLanguage": { "tr": "...", "de": "...", "fr": "...", "it": "...", "es": "...", "ru": "...", "zh": "...", "ja": "...", "ko": "...", "uk": "...", "pt": "...", "es-419": "..." },`,
+      `  "bodyByLanguage": { "tr": "...", "de": "...", "fr": "...", "it": "...", "es": "...", "ru": "...", "zh": "...", "ja": "...", "ko": "...", "uk": "...", "pt": "...", "es-419": "..." }`,
+      `}`,
+    ].filter(Boolean).join("\n");
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: env.OPENAI_MODEL ?? "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 2000,
+        temperature: 0.2,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new AppError("Translation service failed.", 502, undefined, "UPSTREAM_ERROR");
+    }
+
+    const json = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+
+    const rawContent = json?.choices?.[0]?.message?.content;
+    if (!rawContent) {
+      throw new AppError("Empty translation response.", 502, undefined, "UPSTREAM_ERROR");
+    }
+
+    let parsed: {
+      titleByLanguage?: Record<string, string>;
+      bodyByLanguage?: Record<string, string>;
+    };
+
+    try {
+      parsed = JSON.parse(rawContent) as typeof parsed;
+    } catch {
+      throw new AppError("Invalid translation response format.", 502, undefined, "UPSTREAM_ERROR");
+    }
+
+    if (!parsed.titleByLanguage || !parsed.bodyByLanguage) {
+      throw new AppError("Incomplete translation response.", 502, undefined, "UPSTREAM_ERROR");
+    }
+
+    // Always include EN in the result
+    const titleByLanguage: Record<string, string> = {
+      en: input.titleEn,
+      ...parsed.titleByLanguage,
+    };
+    const bodyByLanguage: Record<string, string> = {
+      en: input.bodyEn,
+      ...parsed.bodyByLanguage,
+    };
+
+    return { titleByLanguage, bodyByLanguage };
   },
 };

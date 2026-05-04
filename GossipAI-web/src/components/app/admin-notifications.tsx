@@ -42,6 +42,24 @@ type SupportedLanguageKey =
   | "pt"
   | "es-419";
 
+const LANGUAGE_LABELS: Record<SupportedLanguageKey, string> = {
+  en: "English",
+  tr: "Turkish",
+  de: "German",
+  fr: "French",
+  it: "Italian",
+  es: "Spanish",
+  ru: "Russian",
+  zh: "Chinese",
+  ja: "Japanese",
+  ko: "Korean",
+  uk: "Ukrainian",
+  pt: "Portuguese",
+  "es-419": "Spanish (LATAM)",
+};
+
+const ALL_LANGUAGES = Object.keys(LANGUAGE_LABELS) as SupportedLanguageKey[];
+
 const scenarioOptions = [
   "inactivity_3d",
   "inactivity_7d",
@@ -144,13 +162,16 @@ const retryDeliveryResultSchema = z.object({
   errorMessage: z.string().optional(),
 });
 
+const autoTranslateResultSchema = z.object({
+  titleByLanguage: z.record(z.string()),
+  bodyByLanguage: z.record(z.string()),
+});
+
 const createCampaignFormSchema = z.object({
   scenario: z.enum(scenarioOptions),
   status: z.enum(["draft", "scheduled"] as const),
-  titleTr: z.string().min(3),
-  titleEn: z.string().min(3),
-  bodyTr: z.string().min(5),
-  bodyEn: z.string().min(5),
+  titleEn: z.string().min(3, "Title EN min 3 karakter"),
+  bodyEn: z.string().min(5, "Body EN min 5 karakter"),
   deepLink: z.string().min(1),
   targetPlan: z.enum(["all", ...planOptions] as const),
   scheduledAt: z.string().optional(),
@@ -171,33 +192,20 @@ export function AdminNotifications() {
   const [form, setForm] = useState({
     scenario: "manual_broadcast" as (typeof scenarioOptions)[number],
     status: "draft" as "draft" | "scheduled",
-    titleTr: "",
     titleEn: "",
-    bodyTr: "",
     bodyEn: "",
     deepLink: "gossipai://tabs/home",
     targetPlan: "all" as "all" | (typeof planOptions)[number],
     scheduledAt: "",
   });
 
-  const buildLocalizedMap = (trText: string, enText: string) => {
-    const map: Record<SupportedLanguageKey, string> = {
-      tr: trText,
-      en: enText,
-      de: enText,
-      fr: enText,
-      it: enText,
-      es: enText,
-      ru: enText,
-      zh: enText,
-      ja: enText,
-      ko: enText,
-      uk: enText,
-      pt: enText,
-      "es-419": enText,
-    };
-    return map;
-  };
+  const [translations, setTranslations] = useState<{
+    titleByLanguage: Partial<Record<SupportedLanguageKey, string>>;
+    bodyByLanguage: Partial<Record<SupportedLanguageKey, string>>;
+  }>({ titleByLanguage: {}, bodyByLanguage: {} });
+
+  const [showTranslationPreview, setShowTranslationPreview] = useState(false);
+  const hasTranslations = Object.keys(translations.titleByLanguage).length > 0;
 
   const campaignsQuery = useApiQuery({
     queryKey: ["notifications", "campaigns", scenarioFilter, statusFilter, planFilter],
@@ -258,27 +266,65 @@ export function AdminNotifications() {
     [deliveriesQuery.data, selectedDeliveryId]
   );
 
+  const autoTranslateMutation = useApiMutation({
+    schema: autoTranslateResultSchema,
+    request: (payload: { titleEn: string; bodyEn: string }) => ({
+      method: "POST",
+      url: "/notifications/campaigns/auto-translate",
+      data: payload,
+    }),
+    options: {
+      onSuccess: (response) => {
+        const data = response.data ?? (response as unknown as { titleByLanguage: Record<string, string>; bodyByLanguage: Record<string, string> });
+        setTranslations({
+          titleByLanguage: data.titleByLanguage as Partial<Record<SupportedLanguageKey, string>>,
+          bodyByLanguage: data.bodyByLanguage as Partial<Record<SupportedLanguageKey, string>>,
+        });
+        setShowTranslationPreview(true);
+        showApiSuccessToast(response, "Tum diller cevirildi.");
+      },
+      onError: (error) => showApiErrorToast(error, "Ceviri basarisiz"),
+    },
+  });
+
   const createCampaignMutation = useApiMutation({
     schema: campaignSchema,
-    request: (payload: z.infer<typeof createCampaignFormSchema>) => ({
-      method: "POST",
-      url: "/notifications/campaigns",
-      data: {
-        scenario: payload.scenario,
-        status: payload.status,
-        titleByLanguage: buildLocalizedMap(payload.titleTr, payload.titleEn),
-        bodyByLanguage: buildLocalizedMap(payload.bodyTr, payload.bodyEn),
-        deepLink: payload.deepLink,
-        targetPlan: payload.targetPlan === "all" ? undefined : payload.targetPlan,
-        scheduledAt:
-          payload.status === "scheduled" && payload.scheduledAt
-            ? new Date(payload.scheduledAt).toISOString()
-            : undefined,
-      },
-    }),
+    request: (payload: z.infer<typeof createCampaignFormSchema>) => {
+      const titleByLanguage: Record<string, string> = {
+        en: payload.titleEn,
+        ...translations.titleByLanguage,
+      };
+      const bodyByLanguage: Record<string, string> = {
+        en: payload.bodyEn,
+        ...translations.bodyByLanguage,
+      };
+      // Ensure all supported languages have a value (fallback to EN)
+      for (const lang of ALL_LANGUAGES) {
+        if (!titleByLanguage[lang]) titleByLanguage[lang] = payload.titleEn;
+        if (!bodyByLanguage[lang]) bodyByLanguage[lang] = payload.bodyEn;
+      }
+      return {
+        method: "POST",
+        url: "/notifications/campaigns",
+        data: {
+          scenario: payload.scenario,
+          status: payload.status,
+          titleByLanguage,
+          bodyByLanguage,
+          deepLink: payload.deepLink,
+          targetPlan: payload.targetPlan === "all" ? undefined : payload.targetPlan,
+          scheduledAt:
+            payload.status === "scheduled" && payload.scheduledAt
+              ? new Date(payload.scheduledAt).toISOString()
+              : undefined,
+        },
+      };
+    },
     options: {
       onSuccess: async (response) => {
         showApiSuccessToast(response, "Campaign olusturuldu.");
+        setTranslations({ titleByLanguage: {}, bodyByLanguage: {} });
+        setShowTranslationPreview(false);
         await queryClient.invalidateQueries({ queryKey: ["notifications", "campaigns"] });
       },
       onError: (error) => showApiErrorToast(error, "Campaign olusturulamadi"),
@@ -351,6 +397,18 @@ export function AdminNotifications() {
     },
   });
 
+  const onAutoTranslate = () => {
+    if (!form.titleEn || form.titleEn.length < 3) {
+      showApiErrorToast({ message: "Title EN en az 3 karakter olmali." }, "Form hatasi");
+      return;
+    }
+    if (!form.bodyEn || form.bodyEn.length < 5) {
+      showApiErrorToast({ message: "Body EN en az 5 karakter olmali." }, "Form hatasi");
+      return;
+    }
+    autoTranslateMutation.mutate({ titleEn: form.titleEn, bodyEn: form.bodyEn });
+  };
+
   const onCreateCampaign = () => {
     const parsed = createCampaignFormSchema.safeParse(form);
     if (!parsed.success) {
@@ -403,7 +461,7 @@ export function AdminNotifications() {
           <CardHeader>
             <CardTitle>Campaign olustur</CardTitle>
             <CardDescription>
-              En az TR/EN icerik gir, diger diller EN fallback ile doldurulur.
+              EN icerik gir, &quot;AI ile Cevir&quot; butonuna bas, 13 dile otomatik cevirilir.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -454,33 +512,64 @@ export function AdminNotifications() {
                 <option value="premium">premium</option>
               </select>
             </div>
-            <Input
-              placeholder="Title TR"
-              value={form.titleTr}
-              onChange={(e) => setForm((prev) => ({ ...prev, titleTr: e.target.value }))}
-            />
-            <Input
-              placeholder="Title EN"
-              value={form.titleEn}
-              onChange={(e) => setForm((prev) => ({ ...prev, titleEn: e.target.value }))}
-            />
-            <Textarea
-              placeholder="Body TR"
-              value={form.bodyTr}
-              onChange={(e) => setForm((prev) => ({ ...prev, bodyTr: e.target.value }))}
-            />
-            <Textarea
-              placeholder="Body EN"
-              value={form.bodyEn}
-              onChange={(e) => setForm((prev) => ({ ...prev, bodyEn: e.target.value }))}
-            />
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">İçerik (English)</p>
+              <Input
+                placeholder="Title EN *"
+                value={form.titleEn}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, titleEn: e.target.value }));
+                  setTranslations({ titleByLanguage: {}, bodyByLanguage: {} });
+                  setShowTranslationPreview(false);
+                }}
+              />
+              <Textarea
+                placeholder="Body EN *"
+                value={form.bodyEn}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, bodyEn: e.target.value }));
+                  setTranslations({ titleByLanguage: {}, bodyByLanguage: {} });
+                  setShowTranslationPreview(false);
+                }}
+              />
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={onAutoTranslate}
+              disabled={autoTranslateMutation.isPending || !form.titleEn || !form.bodyEn}
+            >
+              {autoTranslateMutation.isPending ? "Ceviriliyor..." : "🌐 AI ile Cevir (13 dil)"}
+            </Button>
+
+            {showTranslationPreview && hasTranslations && (
+              <div className="rounded-md border p-3 space-y-2 bg-muted/30">
+                <p className="text-xs font-semibold text-muted-foreground">Ceviri Onizleme</p>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {ALL_LANGUAGES.filter((l) => l !== "en").map((lang) => (
+                    <div key={lang} className="text-xs space-y-0.5">
+                      <p className="font-medium text-foreground">{LANGUAGE_LABELS[lang]} ({lang})</p>
+                      <p className="text-muted-foreground">{translations.titleByLanguage[lang] ?? "—"}</p>
+                      <p className="text-muted-foreground">{translations.bodyByLanguage[lang] ?? "—"}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Input
               placeholder="Deep link"
               value={form.deepLink}
               onChange={(e) => setForm((prev) => ({ ...prev, deepLink: e.target.value }))}
             />
-            <Button onClick={onCreateCampaign} disabled={createCampaignMutation.isPending}>
-              Campaign olustur
+            <Button
+              onClick={onCreateCampaign}
+              disabled={createCampaignMutation.isPending || !hasTranslations}
+              className="w-full"
+            >
+              {hasTranslations ? "Campaign olustur" : "Once AI ile cevir"}
             </Button>
           </CardContent>
         </Card>

@@ -41,6 +41,15 @@ export const pingActivity: RequestHandler = async (req, res) => {
   res.status(200).json({ data: result });
 };
 
+export const autoTranslateCampaign: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  const result = await notificationsService.autoTranslateCampaign(req.user, req.body);
+  res.status(200).json({ data: result });
+};
+
 export const createCampaign: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");

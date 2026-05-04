@@ -50,8 +50,16 @@ export const listCampaignDeliveriesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
 });
 
+export const autoTranslateSchema = z.object({
+  titleEn: z.string().trim().min(3).max(120),
+  bodyEn: z.string().trim().min(5).max(500),
+  titleTr: z.string().trim().max(120).optional(),
+  bodyTr: z.string().trim().max(500).optional(),
+});
+
 export type RegisterDeviceInput = z.infer<typeof registerDeviceSchema>;
 export type ActivityPingInput = z.infer<typeof activityPingSchema>;
 export type CreateCampaignInput = z.infer<typeof createCampaignSchema>;
 export type ListCampaignsQueryInput = z.infer<typeof listCampaignsQuerySchema>;
 export type ListCampaignDeliveriesQueryInput = z.infer<typeof listCampaignDeliveriesQuerySchema>;
+export type AutoTranslateInput = z.infer<typeof autoTranslateSchema>;
