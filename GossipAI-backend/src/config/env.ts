@@ -22,6 +22,7 @@ const booleanFromEnv = z.preprocess((value) => {
   }
 
   const normalized = value.trim().toLowerCase();
+  if (normalized === "") return undefined;
   if (normalized === "true" || normalized === "1") return true;
   if (normalized === "false" || normalized === "0") return false;
   return value;
@@ -57,7 +58,9 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(8).max(14).default(10),
   RESEND_API_KEY: z.string().min(1),
-  RESEND_FROM_EMAIL: z.string().email()
+  RESEND_FROM_EMAIL: z.string().email(),
+  REVENUECAT_WEBHOOK_SECRET: optionalTrimmedString,
+  REVENUECAT_API_KEY: optionalTrimmedString,
 });
 
 export const env = envSchema.parse(process.env);

@@ -73,9 +73,10 @@ model User {
   preferredLanguage String         @default("en")
   lastAppActiveAt DateTime?
   tokenVersion    Int              @default(0)
-  plan            SubscriptionPlan @default(basic)
-  gender          String?
-  createdAt       DateTime         @default(now())
+  plan              SubscriptionPlan @default(basic)
+  premiumExpiresAt  DateTime?
+  gender            String?
+  createdAt         DateTime         @default(now())
   gossips         Gossip[]
   refreshSessions RefreshSession[]
   conversations   Conversation[]

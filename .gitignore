@@ -9,3 +9,6 @@
 
 .DS_Store
 .vscode/
+
+# Local-only notes for Codex/operator tasks. Never commit secrets here.
+.codex-local/

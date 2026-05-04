@@ -1,11 +1,21 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
-import { PLAN_DAILY_LIMITS, PLAN_PRICING_USD } from "./subscription.constants";
+import { PLAN_DAILY_LIMITS, PLAN_PRICING_USD, PREMIUM_SUBSCRIPTION_DAYS } from "./subscription.constants";
 
 function todayUTC(): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+/** Returns the effective plan taking expiry into account without writing to DB. */
+function resolveEffectivePlan(plan: SubscriptionPlan, premiumExpiresAt: Date | null): SubscriptionPlan {
+  if (plan === SubscriptionPlan.premium) {
+    if (premiumExpiresAt && premiumExpiresAt < new Date()) {
+      return SubscriptionPlan.basic;
+    }
+  }
+  return plan;
 }
 
 export const subscriptionService = {
@@ -31,28 +41,29 @@ export const subscriptionService = {
   async getUserPlan(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true },
+      select: { plan: true, premiumExpiresAt: true },
     });
 
     if (!user) {
       throw new AppError("User not found", 404, undefined, "USER_NOT_FOUND");
     }
 
-    return user.plan;
+    return resolveEffectivePlan(user.plan, user.premiumExpiresAt);
   },
 
-  async getDailyUsage(userId: string): Promise<{ count: number; limit: number; remaining: number; plan: SubscriptionPlan }> {
+  async getDailyUsage(userId: string): Promise<{ count: number; limit: number; remaining: number; plan: SubscriptionPlan; premiumExpiresAt: Date | null }> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true },
+      select: { plan: true, premiumExpiresAt: true },
     });
 
     if (!user) {
       throw new AppError("User not found", 404, undefined, "USER_NOT_FOUND");
     }
 
+    const effectivePlan = resolveEffectivePlan(user.plan, user.premiumExpiresAt);
     const today = todayUTC();
-    const limit = PLAN_DAILY_LIMITS[user.plan];
+    const limit = PLAN_DAILY_LIMITS[effectivePlan];
 
     const usage = await prisma.dailyUsage.findUnique({
       where: { userId_date: { userId, date: today } },
@@ -64,7 +75,8 @@ export const subscriptionService = {
       count,
       limit,
       remaining: Math.max(0, limit - count),
-      plan: user.plan,
+      plan: effectivePlan,
+      premiumExpiresAt: user.premiumExpiresAt,
     };
   },
 
@@ -108,5 +120,53 @@ export const subscriptionService = {
     });
 
     return user;
+  },
+
+  /**
+   * Activates premium for a user. If expiresAt is provided (from RevenueCat event),
+   * uses that; otherwise defaults to PREMIUM_SUBSCRIPTION_DAYS from now.
+   */
+  async activatePremium(userId: string, expiresAt?: Date | null): Promise<void> {
+    const premiumExpiresAt = expiresAt ?? new Date(Date.now() + PREMIUM_SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        plan: SubscriptionPlan.premium,
+        premiumExpiresAt,
+      },
+    });
+  },
+
+  /**
+   * Deactivates premium for a user (e.g. expiration, cancellation past period end).
+   */
+  async deactivatePremium(userId: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        plan: SubscriptionPlan.basic,
+        premiumExpiresAt: null,
+      },
+    });
+  },
+
+  /**
+   * Finds all users whose premiumExpiresAt is in the past and downgrades them.
+   * Called by the daily cron job.
+   */
+  async expireOverduePremiums(): Promise<number> {
+    const now = new Date();
+    const result = await prisma.user.updateMany({
+      where: {
+        plan: SubscriptionPlan.premium,
+        premiumExpiresAt: { lte: now },
+      },
+      data: {
+        plan: SubscriptionPlan.basic,
+        premiumExpiresAt: null,
+      },
+    });
+    return result.count;
   },
 };
