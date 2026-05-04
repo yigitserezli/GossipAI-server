@@ -21,6 +21,16 @@ jobs:
           ${{ secrets.VPS_ENV_FILE }}
           EOF
 
+      - name: Fix deploy path permissions
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            sudo chown -R deploy:deploy ${{ secrets.VPS_DEPLOY_PATH }}
+
       - name: Upload project files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
