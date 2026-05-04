@@ -1,5 +1,6 @@
 import { MemoryMode, MessageRole, SubscriptionPlan, type Prisma } from "@prisma/client";
 import { env } from "../../config/env";
+import { sendPushToToken } from "../../lib/firebase-admin";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import { conversationService } from "../conversation/conversation.service";
@@ -557,6 +558,75 @@ const ensureConversationForUser = async (conversationId: string, userId: string)
   return conversation;
 };
 
+// How long (ms) since last ping before we assume the user is not in the app
+const USER_INACTIVE_THRESHOLD_MS = 90_000;
+
+const AI_REPLY_PUSH_TITLE: Record<string, string> = {
+  tr: "Yanıtın hazır! 💬",
+  en: "Your reply is ready! 💬",
+  de: "Deine Antwort ist bereit! 💬",
+  fr: "Ta réponse est prête ! 💬",
+  it: "La tua risposta è pronta! 💬",
+  es: "¡Tu respuesta está lista! 💬",
+  ru: "Ваш ответ готов! 💬",
+  zh: "你的回复准备好了！💬",
+  ja: "返信が完成しました！💬",
+  ko: "답장이 준비됐어요! 💬",
+  uk: "Ваша відповідь готова! 💬",
+  pt: "Sua resposta está pronta! 💬",
+  "es-419": "¡Tu respuesta está lista! 💬",
+};
+
+const sendAiReplyPushIfNeeded = async (
+  userId: string,
+  aiContent: string,
+  conversationId: string
+) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { lastAppActiveAt: true, preferredLanguage: true },
+    });
+
+    const isInApp =
+      user?.lastAppActiveAt &&
+      Date.now() - user.lastAppActiveAt.getTime() < USER_INACTIVE_THRESHOLD_MS;
+
+    if (isInApp) {
+      return;
+    }
+
+    const devices = await prisma.pushDevice.findMany({
+      where: { userId, notificationsEnabled: true },
+      select: { token: true, deviceLanguage: true },
+    });
+
+    if (devices.length === 0) {
+      return;
+    }
+
+    for (const device of devices) {
+      const lang = user?.preferredLanguage || device.deviceLanguage || "en";
+      const title = AI_REPLY_PUSH_TITLE[lang] ?? AI_REPLY_PUSH_TITLE.en!;
+      const body = aiContent.replace(/\s+/g, " ").trim().slice(0, 120) + (aiContent.length > 120 ? "…" : "");
+
+      await sendPushToToken({
+        token: device.token,
+        title,
+        body,
+        data: {
+          deepLink: `gossipai://chat/${conversationId}`,
+          conversationId,
+        },
+      }).catch((err) => {
+        console.warn("[chatkit] push to device failed", { token: device.token.slice(0, 20), err });
+      });
+    }
+  } catch (err) {
+    console.warn("[chatkit] sendAiReplyPushIfNeeded failed", err);
+  }
+};
+
 export const chatkitService = {
   async createSession(userId: string): Promise<CreateSessionResult> {
     if (!env.OPENAI_WORKFLOW_ID) {
@@ -741,6 +811,9 @@ export const chatkitService = {
       });
 
       const conversationSnapshot = await conversationService.get(userId, conversationId, 1);
+
+      // Fire-and-forget: send push if user is not in the app
+      void sendAiReplyPushIfNeeded(userId, agentResult.content, conversationId);
 
       return {
         conversationId,
