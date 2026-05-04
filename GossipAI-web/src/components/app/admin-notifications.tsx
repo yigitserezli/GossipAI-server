@@ -275,10 +275,9 @@ export function AdminNotifications() {
     }),
     options: {
       onSuccess: (response) => {
-        const data = response.data ?? (response as unknown as { titleByLanguage: Record<string, string>; bodyByLanguage: Record<string, string> });
         setTranslations({
-          titleByLanguage: data.titleByLanguage as Partial<Record<SupportedLanguageKey, string>>,
-          bodyByLanguage: data.bodyByLanguage as Partial<Record<SupportedLanguageKey, string>>,
+          titleByLanguage: response.titleByLanguage as Partial<Record<SupportedLanguageKey, string>>,
+          bodyByLanguage: response.bodyByLanguage as Partial<Record<SupportedLanguageKey, string>>,
         });
         setShowTranslationPreview(true);
         showApiSuccessToast(response, "Tum diller cevirildi.");
