@@ -163,8 +163,8 @@ const retryDeliveryResultSchema = z.object({
 });
 
 const autoTranslateResultSchema = z.object({
-  titleByLanguage: z.record(z.string()),
-  bodyByLanguage: z.record(z.string()),
+  titleByLanguage: z.record(z.string(), z.string()),
+  bodyByLanguage: z.record(z.string(), z.string()),
 });
 
 const createCampaignFormSchema = z.object({
