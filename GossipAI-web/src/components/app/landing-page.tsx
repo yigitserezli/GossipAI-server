@@ -82,7 +82,7 @@ export function LandingPage({ slogans }: { slogans?: Record<string, SloganEntry>
         }).format(value);
 
     return (
-        <div lang={language} style={cssVars} className="stitch-shell relative isolate min-h-screen flex flex-col overflow-x-hidden text-(--dt-on-bg)">
+        <div lang={language} style={{...cssVars, backgroundColor: '#02010a'}} className="stitch-shell relative isolate min-h-screen flex flex-col overflow-x-clip overflow-y-clip text-(--dt-on-bg)">
             <LandingBackground onReady={() => setIsAuroraReady(true)} />
             {isAuroraReady ? (
                 <>

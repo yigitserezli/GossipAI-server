@@ -40,6 +40,7 @@ export function StoreBadge({
   title,
   icon,
   dark = false,
+  className = "",
 }: {
   href: string;
   label: string;
@@ -47,6 +48,7 @@ export function StoreBadge({
   title: string;
   icon: ReactNode;
   dark?: boolean;
+  className?: string;
 }) {
   return (
     <a
@@ -55,9 +57,10 @@ export function StoreBadge({
       rel="noopener noreferrer"
       aria-label={label}
       className={
-        dark
+        (dark
           ? "inline-flex h-13 items-center gap-3 rounded-[10px] border border-white/30 bg-white/10 px-5 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-          : "inline-flex h-13 items-center gap-3 rounded-[10px] bg-black px-5 text-white transition-opacity hover:opacity-80"
+          : "inline-flex h-13 items-center gap-3 rounded-[10px] bg-black px-5 text-white transition-opacity hover:opacity-80") +
+        (className ? ` ${className}` : "")
       }
     >
       {icon}

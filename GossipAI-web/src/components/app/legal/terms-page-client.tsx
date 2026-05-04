@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LegalSection, LegalShell } from "@/components/app/legal/legal-shell";
 
 const LAST_UPDATED = "March 28, 2026";
-const CONTACT_EMAIL = "support@gossip-ai.site";
+const CONTACT_EMAIL = "alpermir3@gmail.com";
 const APP_NAME = "GossipAI";
 const COMPANY = "GossipAI";
 

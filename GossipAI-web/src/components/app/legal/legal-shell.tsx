@@ -9,9 +9,24 @@ type LegalShellProps = {
   subtitle: string;
   active: "terms" | "privacy";
   children: React.ReactNode;
+  navExtra?: React.ReactNode;
+  backToHome?: string;
+  footerRights?: string;
+  footerPrivacy?: string;
+  footerTerms?: string;
 };
 
-export function LegalShell({ title, subtitle, active, children }: LegalShellProps) {
+export function LegalShell({
+  title,
+  subtitle,
+  active,
+  children,
+  navExtra,
+  backToHome = "Back to home",
+  footerRights = "All rights reserved.",
+  footerPrivacy = "Privacy Policy",
+  footerTerms = "Terms of Service",
+}: LegalShellProps) {
   const { cssVars } = useDesignTokens();
 
   return (
@@ -31,9 +46,12 @@ export function LegalShell({ title, subtitle, active, children }: LegalShellProp
           />
           <span className="text-sm font-semibold text-(--dt-on-surface)">GossipAI</span>
         </Link>
-        <Link href="/" className="text-sm text-(--dt-on-surface-variant) hover:text-(--dt-primary)">
-          Back to home
-        </Link>
+        <div className="flex items-center gap-3">
+          {navExtra}
+          <Link href="/" className="text-sm text-(--dt-on-surface-variant) hover:text-(--dt-primary)">
+            {backToHome}
+          </Link>
+        </div>
       </nav>
 
       <main className="relative z-10 mx-auto w-full max-w-5xl px-6 pb-16 pt-10">
@@ -49,13 +67,13 @@ export function LegalShell({ title, subtitle, active, children }: LegalShellProp
 
       <footer className="border-t border-(--dt-outline-variant)/60 py-8">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-6">
-          <p className="text-xs text-(--dt-on-surface-variant)">© {new Date().getFullYear()} GossipAI. All rights reserved.</p>
+          <p className="text-xs text-(--dt-on-surface-variant)">© {new Date().getFullYear()} GossipAI. {footerRights}</p>
           <div className="flex gap-5 text-xs text-(--dt-on-surface-variant)">
             <Link href="/privacy" className={active === "privacy" ? "text-(--dt-primary)" : "hover:text-(--dt-primary)"}>
-              Privacy Policy
+              {footerPrivacy}
             </Link>
             <Link href="/terms" className={active === "terms" ? "text-(--dt-primary)" : "hover:text-(--dt-primary)"}>
-              Terms of Service
+              {footerTerms}
             </Link>
           </div>
         </div>
