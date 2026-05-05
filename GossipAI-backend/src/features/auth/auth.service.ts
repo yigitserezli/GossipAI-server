@@ -6,7 +6,7 @@ import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import type { AuthContextUser } from "../../shared/types/auth";
-import type { AdminVerifyPasscodeInput, LoginInput, RegisterInput } from "./auth.schema";
+import type { AdminVerifyPasscodeInput, LoginInput, LogoutInput, RegisterInput } from "./auth.schema";
 import type { SessionContext } from "./session-context";
 
 interface PublicUser {
@@ -381,9 +381,9 @@ export const authService = {
     };
   },
 
-  async logout(refreshToken: string) {
+  async logout(input: LogoutInput) {
     try {
-      const payload = verifyRefreshToken(refreshToken);
+      const payload = verifyRefreshToken(input.refreshToken);
 
       await prisma.refreshSession.updateMany({
         where: {
@@ -395,6 +395,15 @@ export const authService = {
           lastUsedAt: new Date()
         }
       });
+
+      if (input.deviceToken) {
+        await prisma.pushDevice.deleteMany({
+          where: {
+            token: input.deviceToken,
+            userId: payload.sub
+          }
+        });
+      }
     } catch {
       return;
     }

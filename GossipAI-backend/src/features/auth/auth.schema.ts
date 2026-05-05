@@ -32,6 +32,11 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(1)
 });
 
+export const logoutSchema = z.object({
+  refreshToken: z.string().min(1),
+  deviceToken: z.string().min(20).optional()
+});
+
 export const updateLanguageSchema = z.object({
   language: z.enum(supportedLanguages)
 });
@@ -52,6 +57,7 @@ export const adminVerifyPasscodeSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
+export type LogoutInput = z.infer<typeof logoutSchema>;
 export type UpdateLanguageInput = z.infer<typeof updateLanguageSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

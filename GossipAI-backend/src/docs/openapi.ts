@@ -200,6 +200,14 @@ export const openApiSpec = {
         },
         required: ["refreshToken"]
       },
+      LogoutRequest: {
+        type: "object",
+        properties: {
+          refreshToken: { type: "string", minLength: 1 },
+          deviceToken: { type: "string", minLength: 20 }
+        },
+        required: ["refreshToken"]
+      },
       MeResponse: {
         type: "object",
         properties: {
@@ -669,7 +677,7 @@ export const openApiSpec = {
           required: true,
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/RefreshRequest" }
+              schema: { $ref: "#/components/schemas/LogoutRequest" }
             }
           }
         },
