@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LEGAL_CONTACT_EMAIL } from "@/components/app/legal/legal-config";
 import { LegalSection, LegalShell } from "@/components/app/legal/legal-shell";
 import {
   PRIVACY_TRANSLATIONS,
@@ -8,8 +9,6 @@ import {
   type SupportedLang,
 } from "@/components/app/legal/privacy-translations";
 import { cn } from "@/lib/utils";
-
-const CONTACT_EMAIL = "alpermir3@gmail.com";
 
 export function PrivacyPageClient() {
   const [lang, setLang] = useState<SupportedLang>("en");
@@ -44,6 +43,8 @@ export function PrivacyPageClient() {
       footerRights={t.footerRights}
       footerPrivacy={t.footerPrivacy}
       footerTerms={t.footerTerms}
+      footerCookies={t.footerCookies}
+      footerRefund={t.footerRefund}
     >
       {t.sections.map((section) => (
         <LegalSection key={section.title} title={section.title}>
@@ -54,10 +55,10 @@ export function PrivacyPageClient() {
                 <>
                   {" "}
                   <a
-                    href={`mailto:${section.contactEmail ?? CONTACT_EMAIL}`}
+                    href={`mailto:${section.contactEmail ?? LEGAL_CONTACT_EMAIL}`}
                     className="text-(--dt-primary) hover:underline"
                   >
-                    {section.contactEmail ?? CONTACT_EMAIL}
+                    {section.contactEmail ?? LEGAL_CONTACT_EMAIL}
                   </a>
                   {section.paragraphAfter && ` ${section.paragraphAfter}`}
                 </>
@@ -76,4 +77,3 @@ export function PrivacyPageClient() {
     </LegalShell>
   );
 }
-

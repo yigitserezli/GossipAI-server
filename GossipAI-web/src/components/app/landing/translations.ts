@@ -76,6 +76,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     ctaBullets: ["Basic plan mevcut", "iOS ve Android", "Güvenlik odaklı tasarım"],
     footerPrivacy: "Gizlilik Politikası",
     footerTerms: "Kullanım Şartları",
+    footerCookies: "Çerez Politikası",
+    footerRefund: "İade Politikası",
     footerRights: "Tüm hakları saklıdır.",
   },
   en: {
@@ -153,6 +155,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     ctaBullets: ["Basic plan available", "iOS and Android", "Security-minded design"],
     footerPrivacy: "Privacy Policy",
     footerTerms: "Terms of Service",
+    footerCookies: "Cookie Policy",
+    footerRefund: "Refund Policy",
     footerRights: "All rights reserved.",
   },
   de: {
@@ -230,6 +234,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     ctaBullets: ["Basic-Plan verfügbar", "iOS und Android", "Sicherheitsorientiertes Design"],
     footerPrivacy: "Datenschutz",
     footerTerms: "Nutzungsbedingungen",
+    footerCookies: "Cookie-Richtlinie",
+    footerRefund: "Rückerstattung",
     footerRights: "Alle Rechte vorbehalten.",
   },
   fr: {
@@ -307,6 +313,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     ctaBullets: ["Offre Basic disponible", "iOS et Android", "Conception axée sécurité"],
     footerPrivacy: "Politique de confidentialité",
     footerTerms: "Conditions d'utilisation",
+    footerCookies: "Politique relative aux cookies",
+    footerRefund: "Politique de remboursement",
     footerRights: "Tous droits réservés.",
   },
   it: {
@@ -384,6 +392,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     ctaBullets: ["Piano Basic disponibile", "iOS e Android", "Design orientato alla sicurezza"],
     footerPrivacy: "Privacy Policy",
     footerTerms: "Termini di servizio",
+    footerCookies: "Informativa sui cookie",
+    footerRefund: "Politica di rimborso",
     footerRights: "Tutti i diritti riservati.",
   },
   es: {
@@ -461,6 +471,8 @@ export const TRANSLATIONS: Record<LandingLanguage, LandingCopy> = {
     ctaBullets: ["Plan Basic disponible", "iOS y Android", "Diseno centrado en seguridad"],
     footerPrivacy: "Politica de privacidad",
     footerTerms: "Terminos de servicio",
+    footerCookies: "Politica de cookies",
+    footerRefund: "Politica de reembolsos",
     footerRights: "Todos los derechos reservados.",
   },
 };

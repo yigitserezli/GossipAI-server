@@ -23,14 +23,16 @@ export type PrivacyTranslation = {
   footerRights: string;
   footerPrivacy: string;
   footerTerms: string;
+  footerCookies: string;
+  footerRefund: string;
   sections: PrivacySection[];
 };
 
 const LAST_UPDATED = {
-  en: "March 28, 2026",
-  tr: "28 Mart 2026",
-  de: "28. März 2026",
-  es: "28 de marzo de 2026",
+  en: "May 6, 2026",
+  tr: "6 Mayıs 2026",
+  de: "6. Mai 2026",
+  es: "6 de mayo de 2026",
 };
 
 export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
@@ -41,6 +43,8 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
     footerRights: "All rights reserved.",
     footerPrivacy: "Privacy Policy",
     footerTerms: "Terms of Service",
+    footerCookies: "Cookie Policy",
+    footerRefund: "Refund Policy",
     sections: [
       {
         title: "1. Introduction",
@@ -50,32 +54,32 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "2. Information We Collect",
         items: [
-          "Account data: name, email address, and password hash.",
-          "User-generated content: message text you voluntarily submit.",
-          "Usage data: feature interactions and session metadata.",
-          "Device data: device type, OS version, app version.",
-          "Log data: IP address, browser type, crash reports.",
+          "Account data: your name and email address when you register.",
+          "Conversation content: messages or text you submit so GossipAI can generate relationship advice.",
+          "Preference data: language and basic app settings.",
+          "Subscription status: plan and entitlement information processed with RevenueCat.",
+          "Device and diagnostics data: device type, operating system version, app version, and related technical logs.",
         ],
       },
       {
         title: "3. How We Use Your Information",
         items: [
-          "To provide and maintain the Service.",
-          "To process AI requests and return results.",
-          "To send transactional communications.",
-          "To improve product quality and reliability.",
+          "To provide personalized AI relationship advice and maintain your account.",
+          "To process AI requests and return results inside the Service.",
+          "To manage subscriptions, access levels, and transaction-related support.",
+          "To improve product quality, reliability, safety, and diagnostics.",
           "To prevent abuse and comply with legal obligations.",
         ],
       },
       {
-        title: "4. AI Processing & OpenAI",
+        title: "4. How We Handle AI Data",
         paragraph:
-          "Submitted message text may be sent to OpenAI APIs to generate responses, under applicable contractual protections and platform policies.",
+          "Submitted message text may be processed through AI service providers to generate results for you. We do not sell your personal data and we do not use your data to train external AI models.",
       },
       {
         title: "5. Data Retention",
         paragraph:
-          "Conversation history may be retained to provide continuity. You may request deletion at",
+          "We retain account and conversation data for the life of your account and for up to 30 days after account deletion to complete operational and legal follow-up, after which it is deleted or anonymized. For deletion requests contact",
         hasContactLink: true,
         paragraphAfter: ".",
       },
@@ -87,21 +91,21 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "7. Third-Party Services",
         items: [
-          "OpenAI for model inference.",
-          "Cloud hosting infrastructure providers.",
-          "Email delivery providers for transactional messages.",
-          "App distribution platforms for iOS and Android releases.",
+          "AI service providers for model inference under applicable contractual protections.",
+          "RevenueCat for subscription management and receipt-related payment status handling.",
+          "Apple App Store and Google Play for app distribution and platform billing.",
+          "Cloud hosting and email delivery providers needed to operate the Service.",
         ],
       },
       {
-        title: "8. Children's Privacy",
+        title: "8. Age Restriction",
         paragraph:
-          "The Service is not directed to children under 13 (or 16 in the EU). We do not knowingly collect child data.",
+          "The Service is intended for adults aged 18 and older and is not directed to children.",
       },
       {
         title: "9. Your Rights",
         paragraph:
-          "Depending on jurisdiction, you may request access, correction, deletion, restriction, objection, and portability of your personal data.",
+          "Depending on your jurisdiction, you may request access, correction, deletion, restriction, objection, and portability of your personal data.",
       },
       {
         title: "10. International Transfers",
@@ -129,6 +133,8 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
     footerRights: "Tüm hakları saklıdır.",
     footerPrivacy: "Gizlilik Politikası",
     footerTerms: "Kullanım Koşulları",
+    footerCookies: "Çerez Politikası",
+    footerRefund: "İade Politikası",
     sections: [
       {
         title: "1. Giriş",
@@ -224,6 +230,8 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
     footerRights: "Alle Rechte vorbehalten.",
     footerPrivacy: "Datenschutzerklärung",
     footerTerms: "Nutzungsbedingungen",
+    footerCookies: "Cookie-Richtlinie",
+    footerRefund: "Rückerstattungsrichtlinie",
     sections: [
       {
         title: "1. Einleitung",
@@ -312,6 +320,8 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
     footerRights: "Todos los derechos reservados.",
     footerPrivacy: "Política de Privacidad",
     footerTerms: "Términos de Servicio",
+    footerCookies: "Política de Cookies",
+    footerRefund: "Política de Reembolsos",
     sections: [
       {
         title: "1. Introducción",

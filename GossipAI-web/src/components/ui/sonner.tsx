@@ -1,20 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { useAppStore } from "@/stores/app-store"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const [theme, setTheme] = useState<ToasterProps["theme"]>("dark")
-
-  useEffect(() => {
-    const root = document.documentElement
-    setTheme(root.classList.contains("dark") ? "dark" : "light")
-  }, [])
+  const theme = useAppStore((state) => state.theme) as ToasterProps["theme"]
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       icons={{
         success: (

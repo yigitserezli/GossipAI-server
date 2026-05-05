@@ -7,13 +7,15 @@ import { useDesignTokens } from "@/hooks/use-design-tokens";
 type LegalShellProps = {
   title: string;
   subtitle: string;
-  active: "terms" | "privacy";
+  active: "terms" | "privacy" | "cookies" | "refund" | "data-deletion";
   children: React.ReactNode;
   navExtra?: React.ReactNode;
   backToHome?: string;
   footerRights?: string;
   footerPrivacy?: string;
   footerTerms?: string;
+  footerCookies?: string;
+  footerRefund?: string;
 };
 
 export function LegalShell({
@@ -26,6 +28,8 @@ export function LegalShell({
   footerRights = "All rights reserved.",
   footerPrivacy = "Privacy Policy",
   footerTerms = "Terms of Service",
+  footerCookies = "Cookie Policy",
+  footerRefund = "Refund Policy",
 }: LegalShellProps) {
   const { cssVars } = useDesignTokens();
 
@@ -68,12 +72,18 @@ export function LegalShell({
       <footer className="border-t border-(--dt-outline-variant)/60 py-8">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-6">
           <p className="text-xs text-(--dt-on-surface-variant)">© {new Date().getFullYear()} GossipAI. {footerRights}</p>
-          <div className="flex gap-5 text-xs text-(--dt-on-surface-variant)">
+          <div className="flex flex-wrap gap-5 text-xs text-(--dt-on-surface-variant)">
             <Link href="/privacy" className={active === "privacy" ? "text-(--dt-primary)" : "hover:text-(--dt-primary)"}>
               {footerPrivacy}
             </Link>
             <Link href="/terms" className={active === "terms" ? "text-(--dt-primary)" : "hover:text-(--dt-primary)"}>
               {footerTerms}
+            </Link>
+            <Link href="/cookies" className={active === "cookies" ? "text-(--dt-primary)" : "hover:text-(--dt-primary)"}>
+              {footerCookies}
+            </Link>
+            <Link href="/refund" className={active === "refund" ? "text-(--dt-primary)" : "hover:text-(--dt-primary)"}>
+              {footerRefund}
             </Link>
           </div>
         </div>

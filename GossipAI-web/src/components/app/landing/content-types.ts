@@ -84,5 +84,7 @@ export type LandingCopy = {
   ctaBullets: string[];
   footerPrivacy: string;
   footerTerms: string;
+  footerCookies: string;
+  footerRefund: string;
   footerRights: string;
 };
