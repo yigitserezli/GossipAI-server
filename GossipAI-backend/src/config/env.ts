@@ -45,7 +45,6 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: optionalTrimmedString,
   FIREBASE_CLIENT_EMAIL: optionalTrimmedString,
   FIREBASE_PRIVATE_KEY: optionalTrimmedString,
-  EXPO_PUSH_ACCESS_TOKEN: optionalTrimmedString,
   NOTIFICATION_SCHEDULER_ENABLED: booleanFromEnv.default(schedulerEnabledByDefault),
   NOTIFICATION_SCHEDULER_CRON: z.string().default("0 9,21 * * *"),
   NOTIFICATION_SCHEDULER_TIMEZONE: z.string().default("UTC"),
