@@ -1,0 +1,45 @@
+name: Renew SSL Certificate
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Her ayın 1'i saat 04:00 UTC'de otomatik yenile
+    - cron: "0 4 1 * *"
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Renew Let's Encrypt certificate on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script_stop: true
+          script: |
+            set -e
+            cd "${{ secrets.VPS_DEPLOY_PATH }}"
+
+            echo "==> Running certbot renew..."
+            docker run --rm \
+              -v "${{ secrets.VPS_DEPLOY_PATH }}/certbot/www:/var/www/certbot" \
+              -v "${{ secrets.VPS_DEPLOY_PATH }}/certbot/conf:/etc/letsencrypt" \
+              certbot/certbot renew --webroot -w /var/www/certbot --force-renewal
+
+            echo "==> Reloading nginx..."
+            docker compose exec -T nginx nginx -s reload
+
+            echo "==> Certificate renewed and nginx reloaded successfully."
+
+      - name: Verify HTTPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            curl -sf --max-time 10 https://gossip-ai.site/api/health && echo "HTTPS OK" || echo "WARNING: HTTPS check failed"

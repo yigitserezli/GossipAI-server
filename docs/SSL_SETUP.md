@@ -34,11 +34,14 @@ docker compose up -d nginx
 
 ## 4) Auto-renew (monthly)
 
-Add root crontab entry on VPS:
+Artık otomatik yenileme **GitHub Actions** ile yapılmaktadır. `.github/workflows/renew-ssl.yml` her ayın 1'i saat 04:00 UTC'de çalışır ve:
+1. Certbot ile sertifikayı yeniler (`--force-renewal`)
+2. Nginx'i yeniden yükler
+3. HTTPS erişimini doğrular
 
-```bash
-0 4 1 * * cd /opt/gossipai && docker run --rm -v /opt/gossipai/certbot/www:/var/www/certbot -v /opt/gossipai/certbot/conf:/etc/letsencrypt certbot/certbot renew --webroot -w /var/www/certbot && docker compose up -d nginx
-```
+Manuel tetiklemek için: GitHub → Actions → **Renew SSL Certificate** → **Run workflow**
+
+> VPS üzerinde ayrıca bir crontab kurmanıza gerek yoktur.
 
 ## 5) Verify
 
