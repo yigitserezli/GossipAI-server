@@ -89,6 +89,14 @@ export function LandingNavbar({
                 {copy[item.key]}
               </Link>
             ))}
+            <Link
+              href="/support"
+              className={`hidden text-(--dt-on-surface-variant) hover:text-(--dt-on-surface) sm:block ${
+                isCompact ? "text-[13px]" : "text-sm"
+              }`}
+            >
+              {copy.support}
+            </Link>
             <select
               value={language}
               onChange={(e) => onLanguageChange(e.target.value as LandingLanguage)}

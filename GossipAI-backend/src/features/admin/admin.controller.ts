@@ -21,6 +21,15 @@ export const listAdminDevices: RequestHandler = async (req, res) => {
   res.status(200).json({ data: devices });
 };
 
+export const listAdminSupportTickets: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  const tickets = await adminService.listSupportTickets(req.user);
+  res.status(200).json({ data: tickets });
+};
+
 const updatePlanBodySchema = z.object({
   plan: z.enum(["basic", "premium"]),
 });
@@ -35,4 +44,20 @@ export const updateUserPlan: RequestHandler = async (req, res) => {
 
   const user = await adminService.updateUserPlan(req.user, userId, plan);
   res.status(200).json({ data: user });
+};
+
+const updateSupportTicketStatusBodySchema = z.object({
+  status: z.enum(["open", "in_progress", "resolved"]),
+});
+
+export const updateSupportTicketStatus: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  const { status } = updateSupportTicketStatusBodySchema.parse(req.body);
+  const ticketId = String(req.params.id);
+
+  const ticket = await adminService.updateSupportTicketStatus(req.user, ticketId, status);
+  res.status(200).json({ data: ticket });
 };

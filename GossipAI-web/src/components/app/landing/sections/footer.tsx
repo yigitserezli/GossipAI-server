@@ -162,6 +162,13 @@ export function LandingFooter({ copy }: { copy: LandingCopy }) {
                 {copy.footerRefund}
                 <ArrowUpRight className="h-3 w-3 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
               </Link>
+              <Link
+                href="/support"
+                className="group inline-flex items-center gap-1 text-sm text-(--dt-on-surface) transition-colors hover:text-(--dt-primary-container)"
+              >
+                {copy.support}
+                <ArrowUpRight className="h-3 w-3 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
+              </Link>
             </nav>
           </div>
         </div>

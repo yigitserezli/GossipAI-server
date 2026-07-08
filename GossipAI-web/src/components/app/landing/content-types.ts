@@ -33,6 +33,7 @@ export type LandingCopy = {
   features: string;
   plans: string;
   howItWorks: string;
+  support: string;
   download: string;
   appStoreEyebrow: string;
   playStoreEyebrow: string;

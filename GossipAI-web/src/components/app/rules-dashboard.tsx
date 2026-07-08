@@ -7,12 +7,14 @@ import { isAdminUnlockedInSession } from "@/lib/security/admin-gate";
 import { useAuthStore } from "@/stores/auth-store";
 import { AdminDevices } from "./admin-devices";
 import { AdminNotifications } from "./admin-notifications";
+import { AdminSupportTickets } from "./admin-support-tickets";
 import { AdminUsers } from "./admin-users";
 
-type AdminSection = "notifications" | "users" | "devices";
+type AdminSection = "notifications" | "support" | "users" | "devices";
 
 const navItems: { id: AdminSection; label: string; description: string }[] = [
   { id: "notifications", label: "Notifications", description: "Campaigns & delivery" },
+  { id: "support", label: "Support", description: "Ticket inbox" },
   { id: "users", label: "Kullanicilar", description: "Plan & prompt istatistikleri" },
   { id: "devices", label: "Cihazlar", description: "Push token listesi" },
 ];
@@ -60,6 +62,7 @@ export function RulesDashboard() {
       {/* Main content */}
       <main className="flex-1 overflow-auto px-8 py-8">
         {activeSection === "notifications" && <AdminNotifications />}
+        {activeSection === "support" && <AdminSupportTickets />}
         {activeSection === "users" && <AdminUsers />}
         {activeSection === "devices" && <AdminDevices />}
       </main>
