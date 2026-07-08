@@ -25,10 +25,12 @@ export function LandingNavbar({
   copy,
   language,
   onLanguageChange,
+  sectionHrefPrefix = "",
 }: {
   copy: LandingCopy;
   language: LandingLanguage;
   onLanguageChange: (value: LandingLanguage) => void;
+  sectionHrefPrefix?: string;
 }) {
   const [isCompact, setIsCompact] = useState(false);
 
@@ -81,7 +83,7 @@ export function LandingNavbar({
             {HEADER_LINKS.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={`${sectionHrefPrefix}${item.href}`}
                 className={`hidden text-(--dt-on-surface-variant) hover:text-(--dt-on-surface) sm:block ${
                   isCompact ? "text-[13px]" : "text-sm"
                 }`}

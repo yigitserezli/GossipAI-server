@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { CheckCircle2, LifeBuoy, Mail, MessageSquareText, Send } from "lucide-react";
 import { z } from "zod";
 import { type FormEvent, useEffect, useState } from "react";
@@ -12,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   LANDING_LANGUAGES,
-  LANDING_LANGUAGE_LABELS,
+  TRANSLATIONS,
   type LandingLanguage,
 } from "@/components/app/landing/content";
+import { LandingNavbar } from "@/components/app/landing/sections";
 import { SUPPORT_TRANSLATIONS } from "@/components/app/support-translations";
 import { useDesignTokens } from "@/hooks/use-design-tokens";
 import { useApiMutation } from "@/lib/query/hooks";
@@ -51,6 +50,7 @@ export function SupportPageClient() {
   const [message, setMessage] = useState("");
   const [lastTicketId, setLastTicketId] = useState<string | null>(null);
   const copy = SUPPORT_TRANSLATIONS[language] ?? SUPPORT_TRANSLATIONS.en;
+  const landingCopy = TRANSLATIONS[language] ?? TRANSLATIONS.en;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -89,38 +89,14 @@ export function SupportPageClient() {
 
   return (
     <div lang={language} style={cssVars} className="stitch-shell min-h-screen text-(--dt-on-bg)">
-      <nav className="stitch-glass sticky top-0 z-50 mx-auto flex w-[calc(100%-2rem)] max-w-6xl items-center justify-between rounded-2xl px-5 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src="/AppIcons/Assets.xcassets/AppIcon.appiconset/60.png"
-            alt="GossipAI logo"
-            width={34}
-            height={34}
-            className="h-8 w-8 rounded-lg object-cover"
-            priority
-          />
-          <span className="text-sm font-semibold text-(--dt-on-surface)">GossipAI</span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <select
-            value={language}
-            onChange={(event) => setLanguage(event.target.value as LandingLanguage)}
-            className="h-9 rounded-lg border border-(--dt-outline-variant) bg-(--dt-surface-low) px-2.5 text-xs text-(--dt-on-surface)"
-            aria-label="Support language"
-          >
-            {LANDING_LANGUAGES.map((code) => (
-              <option key={code} value={code}>
-                {LANDING_LANGUAGE_LABELS[code]}
-              </option>
-            ))}
-          </select>
-          <Link href="/" className="text-sm text-(--dt-on-surface-variant) hover:text-(--dt-primary-container)">
-            {copy.home}
-          </Link>
-        </div>
-      </nav>
+      <LandingNavbar
+        copy={landingCopy}
+        language={language}
+        onLanguageChange={setLanguage}
+        sectionHrefPrefix="/"
+      />
 
-      <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-10">
+      <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-6">
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
           <section className="space-y-6">
             <div className="space-y-4">
