@@ -9,7 +9,7 @@ import {
   LEGAL_DOMAIN,
 } from "@/components/app/legal/legal-config";
 
-const LAST_UPDATED = "May 6, 2026";
+const LAST_UPDATED = "July 11, 2026";
 const linkClass = "text-(--dt-primary) hover:underline";
 
 export function CookiePageClient() {
@@ -45,6 +45,21 @@ export function CookiePageClient() {
         <ul className="list-disc space-y-2 pl-5">
           <li>Secure session or authentication tokens stored on-device so users can stay signed in.</li>
           <li>Local preferences such as language or interface state needed for app and web functionality.</li>
+          <li>
+            Cookie notice acknowledgement stored locally as <code>gossipai-cookie-consent</code>, so the banner is not
+            shown again after acceptance.
+          </li>
+          <li>
+            Web language preference stored locally as <code>gossipai-landing-language</code>.
+          </li>
+          <li>
+            Signed-in restricted web sessions may store <code>gossipai-auth-store</code> and interface preferences in{" "}
+            <code>gossipai-app-store</code>.
+          </li>
+          <li>
+            Admin-only web access may use temporary session storage keys such as <code>gossipai-admin-unlocked</code>,{" "}
+            <code>gossipai-admin-passcode</code>, lockout time, and failed-attempt counters.
+          </li>
           <li>Limited usage and diagnostic data that may be aggregated to improve stability and product quality.</li>
           <li>
             A small functional browser cookie may be used in restricted web interface views to remember UI state, such

@@ -2,6 +2,7 @@
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { CookieConsentBanner } from "@/components/app/cookie-consent-banner";
 import { AppPreferencesSync } from "@/components/providers/app-preferences-sync";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +21,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={150}>
           {children}
+          <CookieConsentBanner />
           <Toaster position="top-right" richColors />
         </TooltipProvider>
       </QueryClientProvider>
