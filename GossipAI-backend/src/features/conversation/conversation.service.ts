@@ -2,6 +2,7 @@ import { MemoryMode, MessageRole, type Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { createChatCompletion } from "../../lib/openai";
 import { AppError } from "../../shared/errors/app-error";
+import { aiConsentService } from "../auth/ai-consent.service";
 import type {
   CreateConversationInput,
   CreateConversationMessageInput,
@@ -401,6 +402,7 @@ export const conversationService = {
   },
 
   async addMessageAndRespond(userId: string, conversationId: string, input: CreateConversationMessageInput) {
+    await aiConsentService.requireActive(userId);
     const conversation = await ensureConversationForUser(conversationId, userId);
 
     if (conversation.status !== "active") {
@@ -526,13 +528,7 @@ export const conversationService = {
         ? normalizeOpenLoops(modelPayload.updated_open_loops_json)
         : currentState.openLoopsJson;
 
-    const nextSafetyFlags =
-      completion.threadId && completion.threadId.length > 0
-        ? {
-            ...currentState.safetyFlagsJson,
-            [OPENAI_THREAD_ID_KEY]: completion.threadId
-          }
-        : currentState.safetyFlagsJson;
+    const { [OPENAI_THREAD_ID_KEY]: _legacyOpenAIThreadId, ...nextSafetyFlags } = currentState.safetyFlagsJson;
 
     const assistantMessage = await prisma.message.create({
       data: {

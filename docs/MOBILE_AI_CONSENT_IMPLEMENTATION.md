@@ -137,18 +137,28 @@ AI and ChatKit endpoints may return these errors:
 
 ```json
 {
+  "success": false,
   "error": {
     "code": "AI_CONSENT_REQUIRED",
-    "message": "AI data-processing consent is required."
+    "message": "AI data-processing consent is required.",
+    "fields": null,
+    "details": {
+      "requiredPolicyVersion": "2026-07-15"
+    }
   }
 }
 ```
 
 ```json
 {
+  "success": false,
   "error": {
     "code": "AI_CONSENT_VERSION_OUTDATED",
-    "message": "The AI data-processing policy must be accepted again."
+    "message": "The AI data-processing policy must be accepted again.",
+    "fields": null,
+    "details": {
+      "requiredPolicyVersion": "2026-07-15"
+    }
   }
 }
 ```

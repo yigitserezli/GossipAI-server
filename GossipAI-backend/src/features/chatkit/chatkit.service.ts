@@ -4,6 +4,7 @@ import { sendPushToToken } from "../../lib/firebase-admin";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import { conversationService } from "../conversation/conversation.service";
+import { aiConsentService } from "../auth/ai-consent.service";
 import {
   T3_HELP_ME_REPLY_INSTRUCTIONS,
   T3_HELP_ME_RESOLVE_INSTRUCTIONS,
@@ -67,8 +68,6 @@ interface AgentsSdk {
   Runner: new (options?: Record<string, unknown>) => {
     run: (agent: unknown, items: AgentInputItem[]) => Promise<RunnerResult>;
   };
-  webSearchTool: (options: Record<string, unknown>) => unknown;
-  withTrace: <T>(traceName: string, run: () => Promise<T>) => Promise<T>;
 }
 
 const OPENAI_CHATKIT_BETA = "chatkit_beta=v1";
@@ -311,9 +310,7 @@ const loadAgentsSdk = async (): Promise<AgentsSdk> => {
 
         if (
           typeof sdk.Agent !== "function" ||
-          typeof sdk.Runner !== "function" ||
-          typeof sdk.webSearchTool !== "function" ||
-          typeof sdk.withTrace !== "function"
+          typeof sdk.Runner !== "function"
         ) {
           throw new Error("Invalid @openai/agents exports");
         }
@@ -344,26 +341,15 @@ const getAgentForMode = async (mode: AgentMode): Promise<{ sdk: AgentsSdk; agent
     const sdk = await loadAgentsSdk();
     const config = AGENT_CONFIGS[mode];
 
-    const tools: unknown[] = [];
-    if (mode !== "SUMMARIZE") {
-      tools.push(
-        sdk.webSearchTool({
-          searchContextSize: "medium",
-          userLocation: { type: "approximate" },
-        })
-      );
-    }
-
     const agent = new sdk.Agent({
       name: config.name,
       instructions: config.instructions,
       model: env.OPENAI_AGENT_MODEL,
-      tools,
       modelSettings: {
         ...(supportsReasoningEffort(env.OPENAI_AGENT_MODEL)
           ? { reasoning: { effort: config.reasoningEffort } }
           : {}),
-        store: true,
+        store: false,
       },
     });
 
@@ -454,15 +440,10 @@ const describeImage = async (imageDataUrl: string): Promise<string> => {
 };
 
 const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: AgentMode, imageDataUrl?: string): Promise<AgentResult> => {
-  if (!env.OPENAI_WORKFLOW_ID) {
-    throw new AppError("OPENAI_WORKFLOW_ID is not configured", 500);
-  }
-
   console.log("[runRosieAgent] ▶ Starting agent call", {
     mode,
     historyLength: history.length,
     hasImage: !!imageDataUrl,
-    promptPreview: prompt.slice(0, 200)
   });
 
   const { sdk, agent } = await getAgentForMode(mode);
@@ -472,7 +453,6 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
   ];
 
   if (imageDataUrl) {
-    console.log("[runRosieAgent] Attaching image as data URL (length:", imageDataUrl.length, ")");
     userContentItems.push({
       type: "input_image",
       image: imageDataUrl,
@@ -491,16 +471,11 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
   let result: RunnerResult;
 
   try {
-    result = await sdk.withTrace(env.OPENAI_WORKFLOW_NAME ?? "Tier3_Rosie", async () => {
-      const runner = new sdk.Runner({
-        traceMetadata: {
-          __trace_source__: "agent-builder",
-          workflow_id: env.OPENAI_WORKFLOW_ID
-        }
-      });
-
-      return runner.run(agent, conversationHistory);
+    const runner = new sdk.Runner({
+      tracingDisabled: true,
+      traceIncludeSensitiveData: false
     });
+    result = await runner.run(agent, conversationHistory);
   } catch (error) {
     console.error("[runRosieAgent] OpenAI agent execution failed", {
       mode,
@@ -521,7 +496,6 @@ const runRosieAgent = async (prompt: string, history: AgentInputItem[], mode: Ag
     mode,
     hasContent: !!content,
     contentLength: content.length,
-    contentPreview: content.slice(0, 300),
     promptTokens: result.usage?.inputTokens ?? result.usage?.input_tokens ?? null,
     completionTokens: result.usage?.outputTokens ?? result.usage?.output_tokens ?? null
   });
@@ -629,6 +603,7 @@ const sendAiReplyPushIfNeeded = async (
 
 export const chatkitService = {
   async createSession(userId: string): Promise<CreateSessionResult> {
+    await aiConsentService.requireActive(userId);
     if (!env.OPENAI_WORKFLOW_ID) {
       throw new AppError("OPENAI_WORKFLOW_ID is not configured", 500);
     }
@@ -674,6 +649,7 @@ export const chatkitService = {
   },
 
   async sendMessage(userId: string, input: ChatkitMessageInput) {
+    await aiConsentService.requireActive(userId);
     const resolvedMode = resolveAgentMode(input);
 
     const user = await prisma.user.findUnique({
@@ -702,8 +678,7 @@ export const chatkitService = {
       userGender: input.userGender ?? null,
       hasImage: !!input.imageBase64,
       imageSizeBytes: input.imageBase64 ? Buffer.byteLength(input.imageBase64, "utf8") : 0,
-      contentLength: input.content.length,
-      contentPreview: input.content.slice(0, 150)
+      contentLength: input.content.length
     });
     try {
       let conversationId = input.conversationId;

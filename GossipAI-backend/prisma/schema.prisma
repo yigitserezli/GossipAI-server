@@ -31,6 +31,11 @@ enum MemoryItemType {
   boundary
 }
 
+enum AiConsentStatus {
+  granted
+  revoked
+}
+
 enum SubscriptionPlan {
   basic
   premium
@@ -92,8 +97,21 @@ model User {
   pushDevices     PushDevice[]
   notificationDeliveries NotificationDelivery[]
   supportTickets  SupportTicket[]
+  aiConsentEvents AiConsentEvent[]
 
   @@map("users")
+}
+
+model AiConsentEvent {
+  id            String          @id @default(cuid())
+  userId        String
+  status        AiConsentStatus
+  policyVersion String
+  createdAt     DateTime        @default(now())
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_consent_events")
 }
 
 model SupportTicket {

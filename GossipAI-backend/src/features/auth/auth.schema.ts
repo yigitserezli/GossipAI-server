@@ -41,6 +41,11 @@ export const updateLanguageSchema = z.object({
   language: z.enum(supportedLanguages)
 });
 
+export const aiConsentSchema = z.object({
+  action: z.enum(["grant", "revoke"]),
+  policyVersion: z.string().trim().min(1).max(64)
+});
+
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().email()
 });
@@ -59,6 +64,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
 export type LogoutInput = z.infer<typeof logoutSchema>;
 export type UpdateLanguageInput = z.infer<typeof updateLanguageSchema>;
+export type AiConsentInput = z.infer<typeof aiConsentSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type AdminVerifyPasscodeInput = z.infer<typeof adminVerifyPasscodeSchema>;

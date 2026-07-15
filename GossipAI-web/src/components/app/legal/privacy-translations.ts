@@ -29,7 +29,7 @@ export type PrivacyTranslation = {
 };
 
 const LAST_UPDATED = {
-  en: "May 6, 2026",
+  en: "July 15, 2026",
   tr: "6 Mayıs 2026",
   de: "6. Mai 2026",
   es: "6 de mayo de 2026",
@@ -74,7 +74,7 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "4. How We Handle AI Data",
         paragraph:
-          "Submitted message text may be processed through AI service providers to generate results for you. We do not sell your personal data and we do not use your data to train external AI models.",
+          "Before you use an AI feature, we ask for your permission to send data to OpenAI. To generate a response, we may send your message, added context or chat log, recent conversation messages, saved summaries or memory, selected request preferences, a technical GossipAI account identifier, and any image you choose to attach. We do not sell your personal data. OpenAI API data is not used to train OpenAI models by default; OpenAI may retain limited data for abuse monitoring and as required to provide the service.",
       },
       {
         title: "5. Data Retention",
@@ -91,7 +91,7 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "7. Third-Party Services",
         items: [
-          "AI service providers for model inference under applicable contractual protections.",
+          "OpenAI, which processes the AI request data described above to generate responses under applicable contractual and security protections.",
           "RevenueCat for subscription management and receipt-related payment status handling.",
           "Apple App Store and Google Play for app distribution and platform billing.",
           "Cloud hosting and email delivery providers needed to operate the Service.",
