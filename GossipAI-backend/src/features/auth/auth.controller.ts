@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { AppError } from "../../shared/errors/app-error";
 import { extractSessionContext } from "./session-context";
 import { authService } from "./auth.service";
+import { aiConsentService } from "./ai-consent.service";
 
 export const register: RequestHandler = async (req, res) => {
     const result = await authService.register(req.body, extractSessionContext(req));
@@ -39,6 +40,23 @@ export const updateLanguage: RequestHandler = async (req, res) => {
 
   const user = await authService.updatePreferredLanguage(req.user, req.body.language);
   res.status(200).json({ user });
+};
+
+export const getAiConsent: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  res.status(200).json({ data: await aiConsentService.getState(req.user.id) });
+};
+
+export const updateAiConsent: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  const state = await aiConsentService.record(req.user.id, req.body.action, req.body.policyVersion);
+  res.status(200).json({ data: state });
 };
 
 export const verifyAdminPasscode: RequestHandler = async (req, res) => {

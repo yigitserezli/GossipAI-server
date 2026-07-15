@@ -330,11 +330,10 @@ const createCompletionWithModel = async (messages: ChatMessage[]): Promise<Compl
 
 export const createChatCompletion = async (
   messages: ChatMessage[],
-  options?: CompletionOptions
+  _options?: CompletionOptions
 ): Promise<CompletionResult> => {
-  if (env.OPENAI_ASSISTANT_ID) {
-    return createCompletionWithAssistant(messages, options);
-  }
-
+  // Keep user conversation state in GossipAI's database. OpenAI Assistant
+  // threads persist until explicitly deleted, so this privacy-sensitive path
+  // intentionally uses stateless chat completions instead.
   return createCompletionWithModel(messages);
 };
