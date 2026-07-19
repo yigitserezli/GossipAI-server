@@ -76,6 +76,10 @@ enum SupportTicketStatus {
   resolved
 }
 
+enum ExternalDeletionProvider {
+  revenuecat
+}
+
 model User {
   id              String           @id @default(uuid())
   name            String
@@ -112,6 +116,23 @@ model AiConsentEvent {
 
   @@index([userId, createdAt])
   @@map("ai_consent_events")
+}
+
+/// A short-lived retry queue for deleting data held by an external processor.
+/// It deliberately has no User foreign key because the local account is deleted
+/// before the external processor confirms its erasure.
+model ExternalDeletionTask {
+  id             String                   @id @default(uuid())
+  provider       ExternalDeletionProvider
+  externalUserId String
+  attempts       Int                      @default(0)
+  lastError      String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@unique([provider, externalUserId])
+  @@index([createdAt])
+  @@map("external_deletion_tasks")
 }
 
 model SupportTicket {

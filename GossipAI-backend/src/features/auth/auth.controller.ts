@@ -24,6 +24,15 @@ export const logout: RequestHandler = async (req, res) => {
     res.status(204).send();
 };
 
+export const deleteAccount: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  await authService.deleteAccount(req.user, req.body.password);
+  res.status(204).send();
+};
+
 export const me: RequestHandler = async (req, res) => {
   if (!req.user) {
     throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");

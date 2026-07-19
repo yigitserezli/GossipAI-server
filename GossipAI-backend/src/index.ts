@@ -4,6 +4,7 @@ import { env } from "./config/env";
 import { startNotificationScheduler, stopNotificationScheduler } from "./features/notifications/notifications.scheduler";
 import { startDailyInsightScheduler, stopDailyInsightScheduler } from "./features/daily-insight/daily-insight.scheduler";
 import { startSubscriptionExpiryScheduler, stopSubscriptionExpiryScheduler } from "./features/subscription/subscription.scheduler";
+import { startExternalDeletionScheduler, stopExternalDeletionScheduler } from "./features/account-deletion/external-deletion.scheduler";
 import { installOpenAIHttpLogger } from "./lib/openai-http-logger";
 import { prisma } from "./lib/prisma";
 
@@ -26,6 +27,7 @@ const bootstrap = async () => {
   startNotificationScheduler();
   startDailyInsightScheduler();
   startSubscriptionExpiryScheduler();
+  startExternalDeletionScheduler();
 
   app.listen(env.PORT, () => {
     console.log(`Server is running on http://localhost:${env.PORT}`);
@@ -36,6 +38,7 @@ const shutdown = async () => {
   stopNotificationScheduler();
   stopDailyInsightScheduler();
   stopSubscriptionExpiryScheduler();
+  stopExternalDeletionScheduler();
   await prisma.$disconnect();
 };
 

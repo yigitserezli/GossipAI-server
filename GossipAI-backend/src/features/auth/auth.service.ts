@@ -7,6 +7,7 @@ import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import type { AuthContextUser } from "../../shared/types/auth";
 import type { AdminVerifyPasscodeInput, LoginInput, LogoutInput, RegisterInput } from "./auth.schema";
+import { externalDeletionService } from "../account-deletion/external-deletion.service";
 import type { SessionContext } from "./session-context";
 
 interface PublicUser {
@@ -407,6 +408,56 @@ export const authService = {
     } catch {
       return;
     }
+  },
+
+  async deleteAccount(user: AuthContextUser, password: string): Promise<void> {
+    const storedUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true, passwordHash: true, tokenVersion: true }
+    });
+
+    if (!storedUser || storedUser.tokenVersion !== user.tokenVersion) {
+      throw new AppError("Unauthorized", 401, undefined, "UNAUTHORIZED");
+    }
+
+    const passwordMatches = await bcrypt.compare(password, storedUser.passwordHash);
+    if (!passwordMatches) {
+      throw new AppError("Current password is incorrect.", 401, undefined, "INVALID_CURRENT_PASSWORD");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Keep only non-personal ticket metadata for operational reporting.
+      await tx.supportTicket.updateMany({
+        where: { userId: storedUser.id },
+        data: {
+          userId: null,
+          contactName: "Deleted user",
+          contactEmail: "deleted-user@invalid.local",
+          subject: "[Deleted account]",
+          message: "[Deleted account]"
+        }
+      });
+
+      await tx.externalDeletionTask.upsert({
+        where: {
+          provider_externalUserId: {
+            provider: "revenuecat",
+            externalUserId: storedUser.id
+          }
+        },
+        create: { provider: "revenuecat", externalUserId: storedUser.id },
+        update: { lastError: null }
+      });
+
+      // All other account-owned relations use database-level CASCADE rules.
+      await tx.user.delete({ where: { id: storedUser.id } });
+    });
+
+    // Never restore the local account because an external processor is delayed.
+    // The durable task will be retried by the scheduler if this attempt fails.
+    await externalDeletionService.processRevenueCatTask(storedUser.id).catch((error) => {
+      console.error("[account-deletion] RevenueCat erasure deferred", error);
+    });
   },
 
   async getMe(user: AuthContextUser) {

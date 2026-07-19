@@ -98,3 +98,27 @@ export async function getRevenueCatPremiumStatus(
 
   return { isActive, expiresAt };
 }
+
+/** Permanently removes the RevenueCat customer data for an erased account. */
+export async function deleteRevenueCatCustomer(appUserId: string): Promise<void> {
+  const apiKey = env.REVENUECAT_SECRET_API_KEY;
+  // No RevenueCat integration means there is no external profile to erase. If
+  // RevenueCat is otherwise configured, do not silently claim an erasure that
+  // needs a server-only secret key.
+  if (!apiKey) {
+    if (!env.REVENUECAT_API_KEY) return;
+    throw new Error("REVENUECAT_SECRET_API_KEY is required to erase a RevenueCat customer");
+  }
+
+  const response = await fetch(`${RC_BASE_URL}/subscribers/${encodeURIComponent(appUserId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  // A previously deleted customer is already in the desired state.
+  if (response.ok || response.status === 404) return;
+  throw new Error(`RevenueCat deletion failed: ${response.status} ${response.statusText}`);
+}

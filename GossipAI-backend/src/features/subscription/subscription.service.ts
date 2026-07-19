@@ -129,7 +129,7 @@ export const subscriptionService = {
   async activatePremium(userId: string, expiresAt?: Date | null): Promise<void> {
     const premiumExpiresAt = expiresAt ?? new Date(Date.now() + PREMIUM_SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
 
-    await prisma.user.update({
+    await prisma.user.updateMany({
       where: { id: userId },
       data: {
         plan: SubscriptionPlan.premium,
@@ -142,7 +142,7 @@ export const subscriptionService = {
    * Deactivates premium for a user (e.g. expiration, cancellation past period end).
    */
   async deactivatePremium(userId: string): Promise<void> {
-    await prisma.user.update({
+    await prisma.user.updateMany({
       where: { id: userId },
       data: {
         plan: SubscriptionPlan.basic,
