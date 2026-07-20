@@ -7,7 +7,7 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
-CREATE TABLE "external_deletion_tasks" (
+CREATE TABLE IF NOT EXISTS "external_deletion_tasks" (
   "id" TEXT NOT NULL,
   "provider" "ExternalDeletionProvider" NOT NULL,
   "externalUserId" TEXT NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE "external_deletion_tasks" (
   CONSTRAINT "external_deletion_tasks_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "external_deletion_tasks_provider_externalUserId_key"
+CREATE UNIQUE INDEX IF NOT EXISTS "external_deletion_tasks_provider_externalUserId_key"
   ON "external_deletion_tasks"("provider", "externalUserId");
-CREATE INDEX "external_deletion_tasks_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "external_deletion_tasks_createdAt_idx"
   ON "external_deletion_tasks"("createdAt");
