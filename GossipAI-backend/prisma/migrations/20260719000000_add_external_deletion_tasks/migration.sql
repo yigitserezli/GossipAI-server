@@ -1,4 +1,11 @@
-CREATE TYPE "ExternalDeletionProvider" AS ENUM ('revenuecat');
+-- A prior interrupted production attempt may have created the enum before
+-- Prisma could record this migration. Keep the migration recoverable.
+DO $$
+BEGIN
+  CREATE TYPE "ExternalDeletionProvider" AS ENUM ('revenuecat');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE "external_deletion_tasks" (
   "id" TEXT NOT NULL,
