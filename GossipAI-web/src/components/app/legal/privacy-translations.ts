@@ -79,9 +79,7 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "5. Data Retention",
         paragraph:
-          "We retain account and conversation data for the life of your account and for up to 30 days after account deletion to complete operational and legal follow-up, after which it is deleted or anonymized. For deletion requests contact",
-        hasContactLink: true,
-        paragraphAfter: ".",
+          "You can permanently delete your account and associated data immediately in the app from Settings → Account → Delete My Account. Limited encrypted operational backups are removed within 30 days after deletion.",
       },
       {
         title: "6. Data Security",
@@ -168,9 +166,7 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       },
       {
         title: "5. Veri Saklama",
-        paragraph: "Konuşma geçmişi süreklilik sağlamak amacıyla saklanabilir. Silme talebinde bulunmak için",
-        hasContactLink: true,
-        paragraphAfter: "adresine ulaşabilirsiniz.",
+        paragraph: "Hesabınızı ve ilişkili verilerinizi uygulamada Ayarlar → Hesap → Hesabımı Sil yolundan hemen kalıcı olarak silebilirsiniz. Sınırlı şifreli operasyonel yedekler silme işleminden sonra 30 gün içinde kaldırılır.",
       },
       {
         title: "6. Veri Güvenliği",
@@ -266,9 +262,7 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "5. Datenspeicherung",
         paragraph:
-          "Der Gesprächsverlauf kann zur Sicherstellung der Kontinuität gespeichert werden. Löschanfragen richten Sie bitte an",
-        hasContactLink: true,
-        paragraphAfter: ".",
+          "Sie können Ihr Konto und die zugehörigen Daten sofort dauerhaft in der App unter Einstellungen → Konto → Mein Konto löschen entfernen. Begrenzte verschlüsselte Betriebs-Backups werden innerhalb von 30 Tagen entfernt.",
       },
       {
         title: "6. Datensicherheit",
@@ -356,9 +350,7 @@ export const PRIVACY_TRANSLATIONS: Record<SupportedLang, PrivacyTranslation> = {
       {
         title: "5. Retención de datos",
         paragraph:
-          "El historial de conversaciones puede conservarse para proporcionar continuidad. Puede solicitar la eliminación escribiendo a",
-        hasContactLink: true,
-        paragraphAfter: ".",
+          "Puedes eliminar permanentemente tu cuenta y los datos asociados de inmediato en la app desde Ajustes → Cuenta → Eliminar mi cuenta. Las copias de seguridad operativas cifradas limitadas se eliminan en un plazo de 30 días.",
       },
       {
         title: "6. Seguridad de datos",

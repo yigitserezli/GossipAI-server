@@ -60,6 +60,11 @@ const envSchema = z.object({
   RESEND_FROM_EMAIL: z.string().email(),
   REVENUECAT_WEBHOOK_SECRET: optionalTrimmedString,
   REVENUECAT_API_KEY: optionalTrimmedString,
+  // Secret key is server-only and is required to erase a RevenueCat customer.
+  REVENUECAT_SECRET_API_KEY: optionalTrimmedString,
+  EXTERNAL_DELETION_SCHEDULER_ENABLED: booleanFromEnv.default(schedulerEnabledByDefault),
+  EXTERNAL_DELETION_SCHEDULER_CRON: z.string().default("17 * * * *"),
+  EXTERNAL_DELETION_SCHEDULER_TIMEZONE: z.string().default("UTC"),
 });
 
 export const env = envSchema.parse(process.env);
