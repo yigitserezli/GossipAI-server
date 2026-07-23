@@ -16,6 +16,7 @@ type LegalShellProps = {
   footerTerms?: string;
   footerCookies?: string;
   footerRefund?: string;
+  language?: string;
 };
 
 export function LegalShell({
@@ -30,11 +31,12 @@ export function LegalShell({
   footerTerms = "Terms of Service",
   footerCookies = "Cookie Policy",
   footerRefund = "Refund Policy",
+  language,
 }: LegalShellProps) {
   const { cssVars } = useDesignTokens();
 
   return (
-    <div style={cssVars} className="stitch-shell min-h-screen text-(--dt-on-bg)">
+    <div lang={language} style={cssVars} className="stitch-shell min-h-screen text-(--dt-on-bg)">
       <div className="pointer-events-none absolute left-[-120px] top-[-120px] h-80 w-80 rounded-full bg-(--dt-primary-container)/20 blur-3xl" />
       <div className="pointer-events-none absolute right-[-120px] top-[30%] h-80 w-80 rounded-full bg-(--dt-secondary)/16 blur-3xl" />
 
@@ -50,9 +52,9 @@ export function LegalShell({
           />
           <span className="text-sm font-semibold text-(--dt-on-surface)">GossipAI</span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {navExtra}
-          <Link href="/" className="text-sm text-(--dt-on-surface-variant) hover:text-(--dt-primary)">
+          <Link href="/" className="hidden text-sm text-(--dt-on-surface-variant) hover:text-(--dt-primary) sm:block">
             {backToHome}
           </Link>
         </div>

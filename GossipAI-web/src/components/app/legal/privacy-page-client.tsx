@@ -15,22 +15,36 @@ export function PrivacyPageClient() {
   const t = PRIVACY_TRANSLATIONS[lang];
 
   const langSwitcher = (
-    <div className="flex gap-1">
-      {(Object.keys(LANGUAGE_LABELS) as SupportedLang[]).map((l) => (
-        <button
-          key={l}
-          onClick={() => setLang(l)}
-          className={cn(
-            "rounded-md px-2 py-1 text-xs font-medium uppercase transition-colors",
-            l === lang
-              ? "bg-(--dt-primary) text-(--dt-on-primary)"
-              : "text-(--dt-on-surface-variant) hover:text-(--dt-primary)",
-          )}
-        >
-          {LANGUAGE_LABELS[l]}
-        </button>
-      ))}
-    </div>
+    <>
+      <select
+        value={lang}
+        onChange={(event) => setLang(event.target.value as SupportedLang)}
+        className="h-8 w-20 rounded-md border border-(--dt-outline-variant) bg-(--dt-surface-low) px-2 text-xs font-medium text-(--dt-on-surface) sm:hidden"
+        aria-label="Privacy policy language"
+      >
+        {(Object.keys(LANGUAGE_LABELS) as SupportedLang[]).map((l) => (
+          <option key={l} value={l}>
+            {LANGUAGE_LABELS[l]}
+          </option>
+        ))}
+      </select>
+      <div className="hidden gap-1 sm:flex">
+        {(Object.keys(LANGUAGE_LABELS) as SupportedLang[]).map((l) => (
+          <button
+            key={l}
+            onClick={() => setLang(l)}
+            className={cn(
+              "rounded-md px-2 py-1 text-xs font-medium uppercase transition-colors",
+              l === lang
+                ? "bg-(--dt-primary) text-(--dt-on-primary)"
+                : "text-(--dt-on-surface-variant) hover:text-(--dt-primary)",
+            )}
+          >
+            {LANGUAGE_LABELS[l]}
+          </button>
+        ))}
+      </div>
+    </>
   );
 
   return (
@@ -45,6 +59,7 @@ export function PrivacyPageClient() {
       footerTerms={t.footerTerms}
       footerCookies={t.footerCookies}
       footerRefund={t.footerRefund}
+      language={lang}
     >
       {t.sections.map((section) => (
         <LegalSection key={section.title} title={section.title}>
