@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.vps.example
+server.json
 
 **/node_modules
 **/.next
