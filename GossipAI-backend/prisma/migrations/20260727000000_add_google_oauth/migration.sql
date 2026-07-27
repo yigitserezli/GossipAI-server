@@ -1,6 +1,6 @@
 ALTER TABLE "users" ALTER COLUMN "passwordHash" DROP NOT NULL;
 
-CREATE TABLE "oauth_accounts" (
+CREATE TABLE IF NOT EXISTS "oauth_accounts" (
     "id" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
     "providerAccountId" TEXT NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE "oauth_accounts" (
     CONSTRAINT "oauth_accounts_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "oauth_login_grants" (
+CREATE TABLE IF NOT EXISTS "oauth_login_grants" (
     "id" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "userId" TEXT,
@@ -24,10 +24,18 @@ CREATE TABLE "oauth_login_grants" (
     CONSTRAINT "oauth_login_grants_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "oauth_accounts_provider_providerAccountId_key" ON "oauth_accounts"("provider", "providerAccountId");
-CREATE UNIQUE INDEX "oauth_accounts_provider_userId_key" ON "oauth_accounts"("provider", "userId");
-CREATE UNIQUE INDEX "oauth_login_grants_tokenHash_key" ON "oauth_login_grants"("tokenHash");
-CREATE INDEX "oauth_login_grants_expiresAt_idx" ON "oauth_login_grants"("expiresAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauth_accounts_provider_providerAccountId_key" ON "oauth_accounts"("provider", "providerAccountId");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauth_accounts_provider_userId_key" ON "oauth_accounts"("provider", "userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauth_login_grants_tokenHash_key" ON "oauth_login_grants"("tokenHash");
+CREATE INDEX IF NOT EXISTS "oauth_login_grants_expiresAt_idx" ON "oauth_login_grants"("expiresAt");
 
-ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "oauth_login_grants" ADD CONSTRAINT "oauth_login_grants_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'oauth_accounts_userId_fkey') THEN
+    ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'oauth_login_grants_userId_fkey') THEN
+    ALTER TABLE "oauth_login_grants" ADD CONSTRAINT "oauth_login_grants_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
