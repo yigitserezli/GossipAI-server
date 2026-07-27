@@ -66,6 +66,9 @@ jobs:
               npx prisma migrate resolve --applied 00000000000000_baseline || true
               npx prisma migrate resolve --applied 20260505000000_add_premium_expires_at || true
               npx prisma migrate resolve --rolled-back 20260719000000_add_external_deletion_tasks || true
+              # The previous release used db push before migrate deploy, which
+              # may have created Google OAuth tables before this migration ran.
+              npx prisma migrate resolve --rolled-back 20260727000000_add_google_oauth || true
               npx prisma migrate deploy
             '
 
