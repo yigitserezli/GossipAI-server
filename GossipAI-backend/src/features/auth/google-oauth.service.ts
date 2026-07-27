@@ -32,13 +32,14 @@ const getCredentialsFromFile = (): GoogleCredentials | null => {
   const configuredPath = env.GOOGLE_CREDENTIALS_FILE
     ? resolve(process.cwd(), env.GOOGLE_CREDENTIALS_FILE)
     : null;
-  const directory = resolve(process.cwd(), "..", ".secrets");
-  if (!configuredPath && !existsSync(directory)) return null;
+  const directories = [resolve(process.cwd(), ".secrets"), resolve(process.cwd(), "..", ".secrets")];
+  const directory = directories.find((candidate) => existsSync(candidate));
+  if (!configuredPath && !directory) return null;
   const filePath = configuredPath ?? (() => {
-    const fileName = readdirSync(directory).find(
+    const fileName = readdirSync(directory!).find(
       (entry) => entry.startsWith("client_secret_") && entry.endsWith(".json")
     );
-    return fileName ? resolve(directory, fileName) : null;
+    return fileName ? resolve(directory!, fileName) : null;
   })();
   if (!filePath || !existsSync(filePath)) return null;
 
