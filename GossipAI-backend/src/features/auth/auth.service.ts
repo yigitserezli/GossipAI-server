@@ -1,14 +1,15 @@
 import { Prisma, type SubscriptionPlan } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import type { AuthContextUser } from "../../shared/types/auth";
-import type { AdminVerifyPasscodeInput, LoginInput, LogoutInput, RegisterInput } from "./auth.schema";
+import type { AdminVerifyPasscodeInput, CompleteGoogleRegistrationInput, LoginInput, LogoutInput, RegisterInput } from "./auth.schema";
 import { externalDeletionService } from "../account-deletion/external-deletion.service";
 import type { SessionContext } from "./session-context";
+import { googleOAuthService, type GoogleIdentity } from "./google-oauth.service";
 
 interface PublicUser {
   id: string;
@@ -250,6 +251,34 @@ const registerAdminPasscodeFailure = (key: string) => {
   adminPasscodeAttempts.set(key, { attempts, lockUntil: 0 });
 };
 
+const GOOGLE_PROVIDER = "google";
+const GOOGLE_GRANT_TTL_MS = 10 * 60 * 1000;
+
+const createGoogleGrant = async (identity: GoogleIdentity, userId: string | null): Promise<string> => {
+  const grant = randomBytes(32).toString("base64url");
+  await prisma.oAuthLoginGrant.create({
+    data: {
+      tokenHash: googleOAuthService.hashGrant(grant),
+      userId,
+      googleSubject: identity.subject,
+      googleEmail: identity.email,
+      googleName: identity.name,
+      expiresAt: new Date(Date.now() + GOOGLE_GRANT_TTL_MS),
+    },
+  });
+  return grant;
+};
+
+const getValidGoogleGrant = async (grant: string) => {
+  const record = await prisma.oAuthLoginGrant.findUnique({
+    where: { tokenHash: googleOAuthService.hashGrant(grant) },
+  });
+  if (!record || record.consumedAt || record.expiresAt <= new Date()) {
+    throw new AppError("Google sign-in has expired. Please try again.", 401, undefined, "INVALID_GOOGLE_GRANT");
+  }
+  return record;
+};
+
 export const authService = {
   async register(input: RegisterInput, sessionContext: SessionContext): Promise<AuthResult> {
     const normalizedEmail = input.email.toLowerCase();
@@ -308,7 +337,9 @@ export const authService = {
       throw new AppError("Invalid credentials", 401, undefined, "INVALID_CREDENTIALS");
     }
 
-    const passwordMatches = await bcrypt.compare(input.password, user.passwordHash);
+    const passwordMatches = user.passwordHash
+      ? await bcrypt.compare(input.password, user.passwordHash)
+      : false;
 
     if (!passwordMatches) {
       throw new AppError("Invalid credentials", 401, undefined, "INVALID_CREDENTIALS");
@@ -321,6 +352,119 @@ export const authService = {
       tokens: tokenPair.tokens,
       session: tokenPair.session
     };
+  },
+
+  async createGoogleLoginGrant(identity: GoogleIdentity): Promise<string> {
+    const linkedAccount = await prisma.oAuthAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: GOOGLE_PROVIDER,
+          providerAccountId: identity.subject,
+        },
+      },
+      select: { userId: true },
+    });
+
+    if (linkedAccount) return createGoogleGrant(identity, linkedAccount.userId);
+
+    const matchingEmailUser = await prisma.user.findUnique({
+      where: { email: identity.email },
+      select: { id: true },
+    });
+
+    if (matchingEmailUser) {
+      await prisma.oAuthAccount.create({
+        data: {
+          provider: GOOGLE_PROVIDER,
+          providerAccountId: identity.subject,
+          userId: matchingEmailUser.id,
+        },
+      }).catch(async (error) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return;
+        throw error;
+      });
+      return createGoogleGrant(identity, matchingEmailUser.id);
+    }
+
+    return createGoogleGrant(identity, null);
+  },
+
+  async exchangeGoogleLoginGrant(grant: string, sessionContext: SessionContext) {
+    const record = await getValidGoogleGrant(grant);
+    if (!record.userId) {
+      return {
+        status: "registration_required" as const,
+        registration: {
+          grant,
+          name: record.googleName,
+          email: record.googleEmail,
+        },
+      };
+    }
+
+    const consumed = await prisma.oAuthLoginGrant.updateMany({
+      where: { id: record.id, consumedAt: null, expiresAt: { gt: new Date() } },
+      data: { consumedAt: new Date() },
+    });
+    if (consumed.count !== 1) {
+      throw new AppError("Google sign-in has expired. Please try again.", 401, undefined, "INVALID_GOOGLE_GRANT");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: record.userId } });
+    if (!user) throw new AppError("User not found", 404, undefined, "USER_NOT_FOUND");
+    const tokenPair = await createTokenPair(user, sessionContext);
+    return {
+      status: "authenticated" as const,
+      user: sanitizeUser(user),
+      tokens: tokenPair.tokens,
+      session: tokenPair.session,
+    };
+  },
+
+  async completeGoogleRegistration(input: CompleteGoogleRegistrationInput, sessionContext: SessionContext): Promise<AuthResult> {
+    const record = await getValidGoogleGrant(input.grant);
+    if (record.userId) {
+      throw new AppError("Google account is already registered.", 409, undefined, "GOOGLE_ACCOUNT_EXISTS");
+    }
+
+    const user = await prisma.$transaction(async (tx) => {
+      const activeGrant = await tx.oAuthLoginGrant.findUnique({ where: { id: record.id } });
+      if (!activeGrant || activeGrant.consumedAt || activeGrant.expiresAt <= new Date() || activeGrant.userId) {
+        throw new AppError("Google sign-in has expired. Please try again.", 401, undefined, "INVALID_GOOGLE_GRANT");
+      }
+
+      let accountUser = await tx.user.findUnique({ where: { email: activeGrant.googleEmail } });
+      if (!accountUser) {
+        accountUser = await tx.user.create({
+          data: {
+            name: input.name,
+            email: activeGrant.googleEmail,
+            passwordHash: null,
+            gender: input.gender ?? null,
+          },
+        });
+      }
+
+      await tx.oAuthAccount.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: GOOGLE_PROVIDER,
+            providerAccountId: activeGrant.googleSubject,
+          },
+        },
+        create: {
+          provider: GOOGLE_PROVIDER,
+          providerAccountId: activeGrant.googleSubject,
+          userId: accountUser.id,
+        },
+        update: {},
+      });
+      await tx.oAuthLoginGrant.update({ where: { id: activeGrant.id }, data: { consumedAt: new Date() } });
+      return accountUser;
+    });
+
+    const tokenPair = await createTokenPair(user, sessionContext);
+    return { user: sanitizeUser(user), tokens: tokenPair.tokens, session: tokenPair.session };
   },
 
   async refresh(refreshToken: string, sessionContext: SessionContext): Promise<AuthResult> {
@@ -418,6 +562,15 @@ export const authService = {
 
     if (!storedUser || storedUser.tokenVersion !== user.tokenVersion) {
       throw new AppError("Unauthorized", 401, undefined, "UNAUTHORIZED");
+    }
+
+    if (!storedUser.passwordHash) {
+      throw new AppError(
+        "Google accounts must be deleted after Google re-authentication.",
+        400,
+        undefined,
+        "GOOGLE_REAUTH_REQUIRED"
+      );
     }
 
     const passwordMatches = await bcrypt.compare(password, storedUser.passwordHash);

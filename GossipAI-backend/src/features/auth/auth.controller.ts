@@ -3,6 +3,7 @@ import { AppError } from "../../shared/errors/app-error";
 import { extractSessionContext } from "./session-context";
 import { authService } from "./auth.service";
 import { aiConsentService } from "./ai-consent.service";
+import { googleOAuthService } from "./google-oauth.service";
 
 export const register: RequestHandler = async (req, res) => {
     const result = await authService.register(req.body, extractSessionContext(req));
@@ -12,6 +13,35 @@ export const register: RequestHandler = async (req, res) => {
 export const login: RequestHandler = async (req, res) => {
     const result = await authService.login(req.body, extractSessionContext(req));
     res.status(200).json(result);
+};
+
+export const googleStart: RequestHandler = (req, res) => {
+  const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : "";
+  res.redirect(302, googleOAuthService.createAuthorizationUrl(returnTo));
+};
+
+export const googleCallback: RequestHandler = async (req, res) => {
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  if (!code || !state) {
+    throw new AppError("Google did not return an authorization code.", 400, undefined, "INVALID_GOOGLE_CALLBACK");
+  }
+
+  const result = await googleOAuthService.completeAuthorization(code, state);
+  const grant = await authService.createGoogleLoginGrant(result.identity);
+  const redirect = new URL(result.returnTo);
+  redirect.searchParams.set("oauthGrant", grant);
+  res.redirect(302, redirect.toString());
+};
+
+export const googleExchange: RequestHandler = async (req, res) => {
+  const result = await authService.exchangeGoogleLoginGrant(req.body.grant, extractSessionContext(req));
+  res.status(200).json(result);
+};
+
+export const completeGoogleRegistration: RequestHandler = async (req, res) => {
+  const result = await authService.completeGoogleRegistration(req.body, extractSessionContext(req));
+  res.status(201).json(result);
 };
 
 export const refresh: RequestHandler = async (req, res) => {
