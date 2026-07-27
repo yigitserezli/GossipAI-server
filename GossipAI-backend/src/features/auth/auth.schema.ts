@@ -28,6 +28,16 @@ export const loginSchema = z.object({
   password: z.string().min(8)
 });
 
+export const googleExchangeSchema = z.object({
+  grant: z.string().min(32),
+});
+
+export const completeGoogleRegistrationSchema = z.object({
+  grant: z.string().min(32),
+  name: z.string().trim().min(2),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+});
+
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1)
 });
@@ -65,6 +75,8 @@ export const adminVerifyPasscodeSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type GoogleExchangeInput = z.infer<typeof googleExchangeSchema>;
+export type CompleteGoogleRegistrationInput = z.infer<typeof completeGoogleRegistrationSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
 export type LogoutInput = z.infer<typeof logoutSchema>;
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

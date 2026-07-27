@@ -65,6 +65,11 @@ const envSchema = z.object({
   EXTERNAL_DELETION_SCHEDULER_ENABLED: booleanFromEnv.default(schedulerEnabledByDefault),
   EXTERNAL_DELETION_SCHEDULER_CRON: z.string().default("17 * * * *"),
   EXTERNAL_DELETION_SCHEDULER_TIMEZONE: z.string().default("UTC"),
+  GOOGLE_CLIENT_ID: optionalTrimmedString,
+  GOOGLE_CLIENT_SECRET: optionalTrimmedString,
+  GOOGLE_CREDENTIALS_FILE: optionalTrimmedString,
+  GOOGLE_CALLBACK_URL: z.string().url().default("https://gossip-ai.site/api/auth/google/callback"),
+  GOOGLE_MOBILE_REDIRECT_SCHEME: z.string().regex(/^[a-z][a-z0-9+.-]*$/i).default("gossipai"),
 });
 
 export const env = envSchema.parse(process.env);
