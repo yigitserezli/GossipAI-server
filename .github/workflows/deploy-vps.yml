@@ -54,10 +54,20 @@ jobs:
           script: |
             set -e
             cd "${{ secrets.VPS_DEPLOY_PATH }}"
-            docker compose up -d --build --remove-orphans
-            docker compose exec -T backend npx prisma migrate resolve --applied 00000000000000_baseline || true
-            docker compose exec -T backend npx prisma migrate resolve --applied 20260505000000_add_premium_expires_at || true
-            # Recover the one migration that was interrupted after creating its enum.
-            docker compose exec -T backend npx prisma migrate resolve --rolled-back 20260719000000_add_external_deletion_tasks || true
-            docker compose exec -T backend npx prisma migrate deploy
+
+            # Start only Postgres first. Starting the backend before migrations
+            # are applied risks app startup against a partially updated schema.
+            docker compose build backend web
+            docker compose up -d postgres
+
+            # Apply the legacy migration-history recovery and all pending
+            # migrations in a one-off backend container before the app starts.
+            docker compose run --rm --no-deps --entrypoint sh backend -c '
+              npx prisma migrate resolve --applied 00000000000000_baseline || true
+              npx prisma migrate resolve --applied 20260505000000_add_premium_expires_at || true
+              npx prisma migrate resolve --rolled-back 20260719000000_add_external_deletion_tasks || true
+              npx prisma migrate deploy
+            '
+
+            docker compose up -d --remove-orphans
             docker compose ps
