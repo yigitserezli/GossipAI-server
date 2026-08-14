@@ -19,6 +19,7 @@ interface PublicUser {
   plan: SubscriptionPlan;
   gender: string | null;
   createdAt: string;
+  linkedProviders: string[];
 }
 
 interface Tokens {
@@ -59,14 +60,24 @@ interface AdminPasscodeAttemptState {
   lockUntil: number;
 }
 
-const sanitizeUser = (user: { id: string; name: string; email: string; preferredLanguage: string; plan: SubscriptionPlan; gender: string | null; createdAt: Date }): PublicUser => ({
+const sanitizeUser = (user: {
+  id: string;
+  name: string;
+  email: string;
+  preferredLanguage: string;
+  plan: SubscriptionPlan;
+  gender: string | null;
+  createdAt: Date;
+  oauthAccounts?: Array<{ provider: string }>;
+}): PublicUser => ({
   id: user.id,
   name: user.name,
   email: user.email,
   preferredLanguage: user.preferredLanguage,
   plan: user.plan,
   gender: user.gender,
-  createdAt: user.createdAt.toISOString()
+  createdAt: user.createdAt.toISOString(),
+  linkedProviders: user.oauthAccounts?.map((account) => account.provider) ?? []
 });
 
 const toSessionInfo = (session: {
@@ -421,6 +432,60 @@ export const authService = {
     };
   },
 
+  async linkGoogleAccount(user: AuthContextUser, grant: string): Promise<void> {
+    const accountUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { tokenVersion: true },
+    });
+    if (!accountUser || accountUser.tokenVersion !== user.tokenVersion) {
+      throw new AppError("Unauthorized", 401, undefined, "UNAUTHORIZED");
+    }
+
+    const record = await getValidGoogleGrant(grant);
+    await prisma.$transaction(async (tx) => {
+      const activeGrant = await tx.oAuthLoginGrant.findUnique({ where: { id: record.id } });
+      if (!activeGrant || activeGrant.consumedAt || activeGrant.expiresAt <= new Date()) {
+        throw new AppError("Google sign-in has expired. Please try again.", 401, undefined, "INVALID_GOOGLE_GRANT");
+      }
+
+      const existingAccount = await tx.oAuthAccount.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: GOOGLE_PROVIDER,
+            providerAccountId: activeGrant.googleSubject,
+          },
+        },
+      });
+      if (existingAccount && existingAccount.userId !== user.id) {
+        throw new AppError("This Google account is already linked to another user.", 409, undefined, "GOOGLE_ACCOUNT_ALREADY_LINKED");
+      }
+
+      const currentGoogleAccount = await tx.oAuthAccount.findUnique({
+        where: {
+          provider_userId: {
+            provider: GOOGLE_PROVIDER,
+            userId: user.id,
+          },
+        },
+      });
+      if (currentGoogleAccount && currentGoogleAccount.providerAccountId !== activeGrant.googleSubject) {
+        throw new AppError("A different Google account is already linked.", 409, undefined, "GOOGLE_ACCOUNT_ALREADY_LINKED");
+      }
+
+      if (!existingAccount) {
+        await tx.oAuthAccount.create({
+          data: {
+            provider: GOOGLE_PROVIDER,
+            providerAccountId: activeGrant.googleSubject,
+            userId: user.id,
+          },
+        });
+      }
+
+      await tx.oAuthLoginGrant.update({ where: { id: activeGrant.id }, data: { consumedAt: new Date() } });
+    });
+  },
+
   async completeGoogleRegistration(input: CompleteGoogleRegistrationInput, sessionContext: SessionContext): Promise<AuthResult> {
     const record = await getValidGoogleGrant(input.grant);
     if (record.userId) {
@@ -617,6 +682,11 @@ export const authService = {
     const storedUser = await prisma.user.findUnique({
       where: {
         id: user.id
+      },
+      include: {
+        oauthAccounts: {
+          select: { provider: true }
+        }
       }
     });
 
