@@ -2,6 +2,7 @@
 .env.*
 !.env.vps.example
 server.json
+GossipAI-backend/client_secret_*.json
 
 **/node_modules
 **/.next
