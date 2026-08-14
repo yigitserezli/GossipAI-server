@@ -39,6 +39,15 @@ export const googleExchange: RequestHandler = async (req, res) => {
   res.status(200).json(result);
 };
 
+export const linkGoogleAccount: RequestHandler = async (req, res) => {
+  if (!req.user) {
+    throw new AppError("Authentication required.", 401, undefined, "AUTH_REQUIRED");
+  }
+
+  await authService.linkGoogleAccount(req.user, req.body.grant);
+  res.status(204).send();
+};
+
 export const completeGoogleRegistration: RequestHandler = async (req, res) => {
   const result = await authService.completeGoogleRegistration(req.body, extractSessionContext(req));
   res.status(201).json(result);
