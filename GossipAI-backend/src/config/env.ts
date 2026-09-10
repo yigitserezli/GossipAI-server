@@ -70,6 +70,7 @@ const envSchema = z.object({
   GOOGLE_CREDENTIALS_FILE: optionalTrimmedString,
   GOOGLE_CALLBACK_URL: z.string().url().default("https://gossip-ai.site/api/auth/google/callback"),
   GOOGLE_MOBILE_REDIRECT_SCHEME: z.string().regex(/^[a-z][a-z0-9+.-]*$/i).default("gossipai"),
+  APPLE_CLIENT_ID: z.string().min(1).default("com.alperovic.GossipAI"),
 });
 
 export const env = envSchema.parse(process.env);

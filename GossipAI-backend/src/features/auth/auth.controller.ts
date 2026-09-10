@@ -5,6 +5,11 @@ import { authService } from "./auth.service";
 import { aiConsentService } from "./ai-consent.service";
 import { googleOAuthService } from "./google-oauth.service";
 
+export const appleSignIn: RequestHandler = async (req, res) => {
+  const result = await authService.loginWithApple(req.body, extractSessionContext(req));
+  res.status(200).json(result);
+};
+
 export const register: RequestHandler = async (req, res) => {
     const result = await authService.register(req.body, extractSessionContext(req));
     res.status(201).json(result);

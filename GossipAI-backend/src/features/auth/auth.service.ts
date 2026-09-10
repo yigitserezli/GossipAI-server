@@ -6,9 +6,10 @@ import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import type { AuthContextUser } from "../../shared/types/auth";
-import type { AdminVerifyPasscodeInput, CompleteGoogleRegistrationInput, LoginInput, LogoutInput, RegisterInput } from "./auth.schema";
+import type { AdminVerifyPasscodeInput, AppleSignInInput, CompleteGoogleRegistrationInput, LoginInput, LogoutInput, RegisterInput } from "./auth.schema";
 import { externalDeletionService } from "../account-deletion/external-deletion.service";
 import type { SessionContext } from "./session-context";
+import { appleAuthService } from "./apple-auth.service";
 import { googleOAuthService, type GoogleIdentity } from "./google-oauth.service";
 
 interface PublicUser {
@@ -263,6 +264,7 @@ const registerAdminPasscodeFailure = (key: string) => {
 };
 
 const GOOGLE_PROVIDER = "google";
+const APPLE_PROVIDER = "apple";
 const GOOGLE_GRANT_TTL_MS = 10 * 60 * 1000;
 
 const createGoogleGrant = async (identity: GoogleIdentity, userId: string | null): Promise<string> => {
@@ -363,6 +365,60 @@ export const authService = {
       tokens: tokenPair.tokens,
       session: tokenPair.session
     };
+  },
+
+  async loginWithApple(input: AppleSignInInput, sessionContext: SessionContext): Promise<AuthResult> {
+    const identity = await appleAuthService.verifyIdentityToken(input.idToken);
+    const userId = await prisma.$transaction(async (tx) => {
+      const linkedAccount = await tx.oAuthAccount.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: APPLE_PROVIDER,
+            providerAccountId: identity.subject,
+          },
+        },
+        select: { userId: true },
+      });
+      if (linkedAccount) return linkedAccount.userId;
+
+      if (!identity.email) {
+        throw new AppError(
+          "Apple did not share an email address. Please remove GossipAI from Apple ID settings and try again.",
+          400,
+          undefined,
+          "APPLE_EMAIL_REQUIRED"
+        );
+      }
+
+      let user = await tx.user.findUnique({ where: { email: identity.email } });
+      if (!user) {
+        user = await tx.user.create({
+          data: {
+            name: input.name ?? identity.email.split("@")[0] ?? "Apple user",
+            email: identity.email,
+            passwordHash: null,
+          },
+        });
+      }
+
+      await tx.oAuthAccount.create({
+        data: {
+          provider: APPLE_PROVIDER,
+          providerAccountId: identity.subject,
+          userId: user.id,
+        },
+      });
+      return user.id;
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { oauthAccounts: { select: { provider: true } } },
+    });
+    if (!user) throw new AppError("User not found", 404, undefined, "USER_NOT_FOUND");
+
+    const tokenPair = await createTokenPair(user, sessionContext);
+    return { user: sanitizeUser(user), tokens: tokenPair.tokens, session: tokenPair.session };
   },
 
   async createGoogleLoginGrant(identity: GoogleIdentity): Promise<string> {

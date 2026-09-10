@@ -64,6 +64,7 @@ services:
       GOOGLE_CREDENTIALS_FILE: "/app/.secrets/google-oauth.json"
       GOOGLE_CALLBACK_URL: "${GOOGLE_CALLBACK_URL:-https://gossip-ai.site/api/auth/google/callback}"
       GOOGLE_MOBILE_REDIRECT_SCHEME: "${GOOGLE_MOBILE_REDIRECT_SCHEME:-gossipai}"
+      APPLE_CLIENT_ID: "${APPLE_CLIENT_ID:-com.alperovic.GossipAI}"
     volumes:
       - ./.secrets:/app/.secrets:ro
     expose:
