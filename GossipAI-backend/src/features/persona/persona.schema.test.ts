@@ -13,10 +13,10 @@ test("persona creation accepts the supported relationship and context fields", (
   if (result.success) assert.equal(result.data.themeKey, "violet");
 });
 
-test("persona creation rejects unsupported relationships and oversized avatar bodies", () => {
+test("persona creation rejects unsupported relationships and malformed avatar URLs", () => {
   assert.equal(createPersonaSchema.safeParse({ name: "Ece", relationshipType: "family" }).success, false);
   assert.equal(
-    createPersonaSchema.safeParse({ name: "Ece", relationshipType: "crush", avatarImageBase64: "a".repeat(8_000_001) }).success,
+    createPersonaSchema.safeParse({ name: "Ece", relationshipType: "crush", avatarUrl: "not-a-url" }).success,
     false
   );
 });

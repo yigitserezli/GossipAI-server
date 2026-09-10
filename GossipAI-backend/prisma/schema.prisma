@@ -317,7 +317,8 @@ model Persona {
   name               String
   relationshipType   String
   avatarEmoji        String?
-  avatarStoragePath  String?
+  avatarUrl          String?
+  avatarObjectKey    String?
   themeKey           String          @default("violet")
   whoIsThis          String?
   thoughtsFeelings   String?

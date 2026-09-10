@@ -15,8 +15,9 @@ const optionalText = (max: number) => z.string().trim().max(max).optional();
 
 const avatarFields = {
   avatarEmoji: z.string().trim().min(1).max(16).optional(),
-  avatarImageBase64: z.string().trim().min(32).max(8_000_000).optional(),
-  removeAvatarImage: z.boolean().optional(),
+  avatarUrl: z.string().url().max(2_000).optional(),
+  avatarObjectKey: z.string().trim().min(1).max(1_024).optional(),
+  removeAvatar: z.boolean().optional(),
 };
 
 export const createPersonaSchema = z.object({
@@ -47,6 +48,10 @@ export const updatePersonaSchema = z
 
 export const refreshPersonaInsightsSchema = z.object({
   conversationId: z.string().uuid().optional(),
+});
+
+export const createPersonaAvatarUploadUrlSchema = z.object({
+  contentType: z.enum(["image/jpeg", "image/png"]),
 });
 
 export type CreatePersonaInput = z.infer<typeof createPersonaSchema>;

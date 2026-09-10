@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { AppError } from "../../shared/errors/app-error";
 import { personaInsightService } from "./persona-insight.service";
 import { personaService } from "./persona.service";
+import { r2AvatarService } from "./r2-avatar.service";
 
 const userId = (value: string | undefined) => {
   if (!value) throw new AppError("Unauthorized", 401);
@@ -19,3 +20,4 @@ export const createPersona: RequestHandler = async (req, res) => res.status(201)
 export const updatePersona: RequestHandler = async (req, res) => res.json({ data: await personaService.update(userId(req.user?.id), personaId(req.params.id), req.body) });
 export const deletePersona: RequestHandler = async (req, res) => { await personaService.remove(userId(req.user?.id), personaId(req.params.id)); res.status(204).send(); };
 export const refreshPersonaInsights: RequestHandler = async (req, res) => res.json({ data: await personaInsightService.refresh(userId(req.user?.id), personaId(req.params.id), req.body.conversationId) });
+export const createPersonaAvatarUploadUrl: RequestHandler = async (req, res) => res.status(201).json({ data: await r2AvatarService.createUploadUrl(userId(req.user?.id), req.body.contentType) });

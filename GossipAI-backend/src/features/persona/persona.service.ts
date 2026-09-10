@@ -1,11 +1,10 @@
 import type { Persona, PersonaInsight, Prisma } from "@prisma/client";
 import { AppError } from "../../shared/errors/app-error";
-import { getFirebaseStorageBucket, isFirebaseConfigured } from "../../lib/firebase-admin";
 import { prisma } from "../../lib/prisma";
 import type { CreatePersonaInput, UpdatePersonaInput } from "./persona.schema";
+import { r2AvatarService } from "./r2-avatar.service";
 
 const MAX_PERSONAS_PER_USER = 5;
-const AVATAR_URL_TTL_MS = 60 * 60 * 1000;
 
 export type PersonaContextSnapshot = {
   id: string;
@@ -22,58 +21,6 @@ type PersonaWithInsight = Persona & { insight: PersonaInsight | null; _count?: {
 
 const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
-const cleanDataUrl = (value: string) => value.replace(/^data:image\/(?:jpeg|jpg|png);base64,/i, "").trim();
-
-const decodeAvatar = (value: string) => {
-  const isPng = /^data:image\/png;base64,/i.test(value) || cleanDataUrl(value).startsWith("iVBOR");
-  const isJpeg = /^data:image\/(?:jpeg|jpg);base64,/i.test(value) || cleanDataUrl(value).startsWith("/9j/");
-  if (!isPng && !isJpeg) {
-    throw new AppError("Avatar must be a JPEG or PNG image.", 400, undefined, "INVALID_AVATAR", true);
-  }
-
-  const bytes = Buffer.from(cleanDataUrl(value), "base64");
-  if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) {
-    throw new AppError("Avatar image is too large.", 400, undefined, "INVALID_AVATAR", true);
-  }
-
-  return { bytes, contentType: isPng ? "image/png" : "image/jpeg", extension: isPng ? "png" : "jpg" };
-};
-
-const avatarPathFor = (userId: string, personaId: string, extension: string) =>
-  `persona-avatars/${userId}/${personaId}.${extension}`;
-
-const uploadAvatar = async (userId: string, personaId: string, value: string) => {
-  if (!isFirebaseConfigured) {
-    throw new AppError("Avatar storage is not configured.", 503, undefined, "AVATAR_STORAGE_UNAVAILABLE", true);
-  }
-  const avatar = decodeAvatar(value);
-  const path = avatarPathFor(userId, personaId, avatar.extension);
-  const bucket = getFirebaseStorageBucket();
-  await bucket.file(path).save(avatar.bytes, {
-    resumable: false,
-    metadata: { contentType: avatar.contentType, cacheControl: "private, max-age=3600" },
-  });
-  return path;
-};
-
-const deleteAvatar = async (path: string | null) => {
-  if (!path || !isFirebaseConfigured) return;
-  await getFirebaseStorageBucket().file(path).delete({ ignoreNotFound: true });
-};
-
-const avatarUrl = async (path: string | null) => {
-  if (!path || !isFirebaseConfigured) return null;
-  try {
-    const [url] = await getFirebaseStorageBucket().file(path).getSignedUrl({
-      action: "read",
-      expires: Date.now() + AVATAR_URL_TTL_MS,
-    });
-    return url;
-  } catch {
-    return null;
-  }
-};
-
 const toInsight = (insight: PersonaInsight | null) =>
   insight
     ? {
@@ -88,12 +35,12 @@ const toInsight = (insight: PersonaInsight | null) =>
       }
     : null;
 
-const toResponse = async (persona: PersonaWithInsight) => ({
+const toResponse = (persona: PersonaWithInsight) => ({
   id: persona.id,
   name: persona.name,
   relationshipType: persona.relationshipType,
   avatarEmoji: persona.avatarEmoji,
-  avatarUrl: await avatarUrl(persona.avatarStoragePath),
+  avatarUrl: persona.avatarUrl,
   themeKey: persona.themeKey,
   whoIsThis: persona.whoIsThis,
   thoughtsFeelings: persona.thoughtsFeelings,
@@ -126,6 +73,15 @@ const inputFields = (input: CreatePersonaInput | UpdatePersonaInput) => ({
   ...(input.communicationStyle !== undefined ? { communicationStyle: input.communicationStyle } : {}),
 });
 
+const validateAvatarInput = (userId: string, input: CreatePersonaInput | UpdatePersonaInput) => {
+  if ((input.avatarUrl && !input.avatarObjectKey) || (!input.avatarUrl && input.avatarObjectKey)) {
+    throw new AppError("Avatar URL and object key must be provided together.", 400, undefined, "INVALID_AVATAR", true);
+  }
+  if (input.avatarUrl && input.avatarObjectKey && !r2AvatarService.isOwnedPublicObject(userId, input.avatarObjectKey, input.avatarUrl)) {
+    throw new AppError("Avatar does not belong to this user.", 403, undefined, "INVALID_AVATAR", true);
+  }
+};
+
 export const personaService = {
   maxPerUser: MAX_PERSONAS_PER_USER,
 
@@ -148,7 +104,7 @@ export const personaService = {
       orderBy: { createdAt: "asc" },
       include: { insight: true, _count: { select: { conversations: true } } },
     });
-    return Promise.all(personas.map(toResponse));
+    return personas.map(toResponse);
   },
 
   async get(userId: string, personaId: string) {
@@ -161,6 +117,7 @@ export const personaService = {
   },
 
   async create(userId: string, input: CreatePersonaInput) {
+    validateAvatarInput(userId, input);
     const persona = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
       const count = await tx.persona.count({ where: { userId } });
@@ -174,46 +131,34 @@ export const personaService = {
           relationshipType: input.relationshipType,
           themeKey: input.themeKey,
           avatarEmoji: input.avatarEmoji,
+          avatarUrl: input.avatarUrl,
+          avatarObjectKey: input.avatarObjectKey,
           ...inputFields(input),
         },
         include: { insight: true, _count: { select: { conversations: true } } },
       });
     });
 
-    if (input.avatarImageBase64) {
-      try {
-        const avatarStoragePath = await uploadAvatar(userId, persona.id, input.avatarImageBase64);
-        const updated = await prisma.persona.update({
-          where: { id: persona.id },
-          data: { avatarStoragePath },
-          include: { insight: true, _count: { select: { conversations: true } } },
-        });
-        return toResponse(updated);
-      } catch (error) {
-        await prisma.persona.delete({ where: { id: persona.id } }).catch(() => undefined);
-        throw error;
-      }
-    }
-
     return toResponse(persona);
   },
 
   async update(userId: string, personaId: string, input: UpdatePersonaInput) {
     const existing = await findOwned(userId, personaId);
-    let nextAvatarStoragePath = existing.avatarStoragePath;
-    if (input.avatarImageBase64) {
-      nextAvatarStoragePath = await uploadAvatar(userId, personaId, input.avatarImageBase64);
-    } else if (input.removeAvatarImage) {
-      nextAvatarStoragePath = null;
-    }
+    const hasNewAvatar = Boolean(input.avatarUrl || input.avatarObjectKey);
+    validateAvatarInput(userId, input);
 
     const updated = await prisma.persona.update({
       where: { id: personaId },
-      data: { ...inputFields(input), avatarEmoji: input.avatarEmoji, avatarStoragePath: nextAvatarStoragePath },
+      data: {
+        ...inputFields(input),
+        ...(input.avatarEmoji !== undefined ? { avatarEmoji: input.avatarEmoji } : {}),
+        ...(hasNewAvatar ? { avatarUrl: input.avatarUrl, avatarObjectKey: input.avatarObjectKey } : {}),
+        ...(input.removeAvatar ? { avatarUrl: null, avatarObjectKey: null } : {}),
+      },
       include: { insight: true, _count: { select: { conversations: true } } },
     });
-    if (input.removeAvatarImage && existing.avatarStoragePath) {
-      await deleteAvatar(existing.avatarStoragePath).catch(() => undefined);
+    if ((input.removeAvatar || hasNewAvatar) && existing.avatarObjectKey) {
+      await r2AvatarService.delete(existing.avatarObjectKey).catch(() => undefined);
     }
     return toResponse(updated);
   },
@@ -221,7 +166,7 @@ export const personaService = {
   async remove(userId: string, personaId: string) {
     const persona = await findOwned(userId, personaId);
     await prisma.persona.delete({ where: { id: persona.id } });
-    await deleteAvatar(persona.avatarStoragePath).catch(() => undefined);
+    await r2AvatarService.delete(persona.avatarObjectKey).catch(() => undefined);
   },
 
   asJson(snapshot: PersonaContextSnapshot) {
