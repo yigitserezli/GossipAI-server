@@ -23,6 +23,8 @@ export const chatkitRelationSchema = z.enum([
 export const chatkitMessageSchema = z.object({
   content: z.string().trim().min(1).max(100_000),
   conversationId: z.string().trim().min(1).optional(),
+  personaId: z.string().uuid().optional(),
+  personaInsightsEnabled: z.boolean().optional(),
   title: z.string().trim().min(1).max(120).optional(),
   memoryMode: z.nativeEnum(MemoryMode).optional(),
   mode: chatkitModeSchema.default("HELP_ME_REPLY"),
@@ -37,7 +39,12 @@ export const chatkitMessageSchema = z.object({
   imageBase64: z.string().max(20_000_000).optional()
 });
 
+export const updatePersonaInsightsSchema = z.object({
+  enabled: z.boolean(),
+});
+
 export type ChatkitMessageInput = z.infer<typeof chatkitMessageSchema>;
+export type UpdatePersonaInsightsInput = z.infer<typeof updatePersonaInsightsSchema>;
 
 export const emailSummarySchema = z.object({
   conversationId: z.string().trim().min(1),

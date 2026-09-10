@@ -6,7 +6,10 @@ export const createConversationSchema = z.object({
   mode: z.string().default("HELP_ME_REPLY"),
   style: z.string().optional(),
   relation: z.string().optional(),
-  memoryMode: z.nativeEnum(MemoryMode).default(MemoryMode.summary_only)
+  memoryMode: z.nativeEnum(MemoryMode).default(MemoryMode.summary_only),
+  personaId: z.string().uuid().optional(),
+  personaSnapshot: z.record(z.string(), z.unknown()).optional(),
+  personaInsightsEnabled: z.boolean().default(false)
 });
 
 export const createConversationMessageSchema = z.object({
@@ -14,7 +17,8 @@ export const createConversationMessageSchema = z.object({
 });
 
 export const updateConversationSettingsSchema = z.object({
-  memoryMode: z.nativeEnum(MemoryMode)
+  memoryMode: z.nativeEnum(MemoryMode),
+  personaInsightsEnabled: z.boolean().optional()
 });
 
 export type CreateConversationInput = z.infer<typeof createConversationSchema>;

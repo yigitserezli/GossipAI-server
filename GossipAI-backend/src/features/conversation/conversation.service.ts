@@ -241,6 +241,7 @@ export const conversationService = {
       take,
       include: {
         state: true,
+        persona: { select: { id: true, name: true, themeKey: true, avatarEmoji: true } },
         messages: {
           orderBy: {
             createdAt: "desc"
@@ -266,6 +267,11 @@ export const conversationService = {
         relation: conversation.relation ?? null,
         status: conversation.status,
         memoryMode: conversation.memoryMode,
+        personaId: conversation.personaId,
+        personaInsightsEnabled: conversation.personaInsightsEnabled,
+        persona: conversation.persona
+          ? { id: conversation.persona.id, name: conversation.persona.name, themeKey: conversation.persona.themeKey, avatarEmoji: conversation.persona.avatarEmoji }
+          : null,
         createdAt: conversation.createdAt.toISOString(),
         updatedAt: conversation.updatedAt.toISOString(),
         messageCount: conversation._count.messages,
@@ -291,6 +297,9 @@ export const conversationService = {
         style: input.style ?? null,
         relation: input.relation ?? null,
         memoryMode: input.memoryMode,
+        personaId: input.personaId ?? null,
+        personaSnapshot: input.personaSnapshot ? asInputJson(input.personaSnapshot) : undefined,
+        personaInsightsEnabled: input.personaId ? input.personaInsightsEnabled : false,
         state: {
           create: {
             rollingSummary: DEFAULT_STATE.rollingSummary,
@@ -311,6 +320,8 @@ export const conversationService = {
       relation: conversation.relation ?? null,
       status: conversation.status,
       memoryMode: conversation.memoryMode,
+      personaId: conversation.personaId,
+      personaInsightsEnabled: conversation.personaInsightsEnabled,
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
       state: {
@@ -335,6 +346,7 @@ export const conversationService = {
       },
       include: {
         state: true,
+        persona: { select: { id: true, name: true, themeKey: true, avatarEmoji: true } },
         messages: {
           orderBy: {
             createdAt: "desc"
@@ -356,6 +368,11 @@ export const conversationService = {
       relation: conversation.relation ?? null,
       status: conversation.status,
       memoryMode: conversation.memoryMode,
+      personaId: conversation.personaId,
+      personaInsightsEnabled: conversation.personaInsightsEnabled,
+      persona: conversation.persona
+        ? { id: conversation.persona.id, name: conversation.persona.name, themeKey: conversation.persona.themeKey, avatarEmoji: conversation.persona.avatarEmoji }
+        : null,
       createdAt: conversation.createdAt.toISOString(),
       updatedAt: conversation.updatedAt.toISOString(),
       state: toStateDTO(conversation.state),
@@ -376,7 +393,10 @@ export const conversationService = {
         id: conversationId
       },
       data: {
-        memoryMode: input.memoryMode
+        memoryMode: input.memoryMode,
+        ...(input.personaInsightsEnabled !== undefined
+          ? { personaInsightsEnabled: input.personaInsightsEnabled }
+          : {})
       },
       include: {
         state: true
@@ -386,6 +406,7 @@ export const conversationService = {
     return {
       id: updatedConversation.id,
       memoryMode: updatedConversation.memoryMode,
+      personaInsightsEnabled: updatedConversation.personaInsightsEnabled,
       updatedAt: updatedConversation.updatedAt.toISOString(),
       state: toStateDTO(updatedConversation.state)
     };

@@ -7,9 +7,10 @@ import {
   emailChatKitSummary,
   getChatKitConversation,
   listChatKitConversations,
-  sendChatKitMessage
+  sendChatKitMessage,
+  updateChatKitPersonaInsights
 } from "./chatkit.controller";
-import { chatkitMessageSchema, emailSummarySchema } from "./chatkit.schema";
+import { chatkitMessageSchema, emailSummarySchema, updatePersonaInsightsSchema } from "./chatkit.schema";
 
 const chatkitRouter = Router();
 
@@ -20,6 +21,7 @@ chatkitRouter.get("/history", listChatKitConversations);
 chatkitRouter.get("/history/:id", getChatKitConversation);
 chatkitRouter.get("/threads", listChatKitConversations);
 chatkitRouter.get("/threads/:id", getChatKitConversation);
+chatkitRouter.patch("/conversations/:id/persona-insights", validateBody(updatePersonaInsightsSchema), updateChatKitPersonaInsights);
 chatkitRouter.post("/sessions", createChatKitSession);
 chatkitRouter.post("/messages", validateBody(chatkitMessageSchema), enforceDailyLimit, sendChatKitMessage);
 chatkitRouter.post("/email-summary", validateBody(emailSummarySchema), emailChatKitSummary);

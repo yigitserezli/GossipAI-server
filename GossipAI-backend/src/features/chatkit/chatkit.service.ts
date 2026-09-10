@@ -4,6 +4,7 @@ import { sendPushToToken } from "../../lib/firebase-admin";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import { conversationService } from "../conversation/conversation.service";
+import { personaService, type PersonaContextSnapshot } from "../persona/persona.service";
 import { aiConsentService } from "../auth/ai-consent.service";
 import {
   T3_HELP_ME_REPLY_INSTRUCTIONS,
@@ -160,7 +161,11 @@ const toNullableTokenCount = (value: unknown): number | null => {
   return Math.max(Math.trunc(value), 0);
 };
 
-const buildAgentInputText = (input: ChatkitMessageInput, userLanguage?: string): string => {
+const buildAgentInputText = (
+  input: ChatkitMessageInput,
+  userLanguage?: string,
+  persona?: PersonaContextSnapshot | null
+): string => {
   const lines = [`MODE: ${input.mode}`];
 
   if (userLanguage) {
@@ -184,6 +189,19 @@ const buildAgentInputText = (input: ChatkitMessageInput, userLanguage?: string):
   }
   if (input.toneLimits) {
     lines.push(`TONE_LIMITS: ${input.toneLimits}`);
+  }
+  if (persona) {
+    lines.push(
+      "",
+      "ACTIVE_PERSONA_CONTEXT:",
+      `NAME: ${persona.name}`,
+      `RELATIONSHIP: ${persona.relationshipType}`,
+      `WHO_THEY_ARE: ${persona.whoIsThis ?? "Not provided"}`,
+      `USER_FEELINGS: ${persona.thoughtsFeelings ?? "Not provided"}`,
+      `USER_GOAL: ${persona.goals ?? "Not provided"}`,
+      `CURRENT_SITUATION: ${persona.currentSituation ?? "Not provided"}`,
+      `COMMUNICATION_STYLE: ${persona.communicationStyle ?? "Not provided"}`
+    );
   }
 
   lines.push("", "USER_MESSAGE:", input.content);
@@ -521,7 +539,8 @@ const ensureConversationForUser = async (conversationId: string, userId: string)
       }
     },
     include: {
-      state: true
+      state: true,
+      persona: true,
     }
   });
 
@@ -602,6 +621,23 @@ const sendAiReplyPushIfNeeded = async (
 };
 
 export const chatkitService = {
+  async updatePersonaInsights(userId: string, conversationId: string, enabled: boolean) {
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, userId, status: { not: "deleted" } },
+      select: { id: true, personaId: true },
+    });
+    if (!conversation) throw new AppError("Conversation not found", 404);
+    if (!conversation.personaId) {
+      throw new AppError("Only persona conversations can update insights.", 409, undefined, "PERSONA_NOT_ATTACHED", true);
+    }
+    const updated = await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { personaInsightsEnabled: enabled },
+      select: { id: true, personaId: true, personaInsightsEnabled: true },
+    });
+    return updated;
+  },
+
   async createSession(userId: string): Promise<CreateSessionResult> {
     await aiConsentService.requireActive(userId);
     if (!env.OPENAI_WORKFLOW_ID) {
@@ -684,17 +720,27 @@ export const chatkitService = {
       let conversationId = input.conversationId;
 
       if (!conversationId) {
+        const persona = input.personaId
+          ? await personaService.getContext(userId, input.personaId)
+          : null;
         const createdConversation = await conversationService.create(userId, {
           title: input.title,
           mode: resolveAgentMode(input),
           style: input.style ?? undefined,
           relation: input.relation ?? undefined,
-          memoryMode: input.memoryMode ?? MemoryMode.summary_only
+          memoryMode: input.memoryMode ?? MemoryMode.summary_only,
+          personaId: persona?.id,
+          personaSnapshot: persona ? personaService.asJson(persona) as Record<string, unknown> : undefined,
+          personaInsightsEnabled: persona ? Boolean(input.personaInsightsEnabled) : false,
         });
         conversationId = createdConversation.id;
       }
 
       const conversation = await ensureConversationForUser(conversationId, userId);
+
+      const snapshot = conversation.persona
+        ? personaService.toSnapshot(conversation.persona)
+        : (conversation.personaSnapshot as PersonaContextSnapshot | null);
 
       if (conversation.status !== "active") {
         throw new AppError("Conversation is not active", 409);
@@ -738,7 +784,7 @@ export const chatkitService = {
 
       // Run agent and image description in parallel to avoid extra latency
       const [agentResult, imageDesc] = await Promise.all([
-        runRosieAgent(buildAgentInputText(input, user?.preferredLanguage ?? undefined), historyItems, resolveAgentMode(input), imageDataUrl),
+        runRosieAgent(buildAgentInputText(input, user?.preferredLanguage ?? undefined, snapshot), historyItems, resolveAgentMode(input), imageDataUrl),
         imageDataUrl ? describeImage(imageDataUrl) : Promise.resolve("")
       ]);
 

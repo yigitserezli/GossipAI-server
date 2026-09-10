@@ -114,3 +114,14 @@ export const getChatKitConversation: RequestHandler = async (req, res) => {
   // Keep multiple keys for mobile-client compatibility during transition.
   res.status(200).json({ data: conversation, conversation, history: conversation });
 };
+
+export const updateChatKitPersonaInsights: RequestHandler = async (req, res) => {
+  if (!req.user?.id) throw new AppError("Unauthorized", 401);
+  const conversationId = requireConversationId(req.params.id);
+  const conversation = await chatkitService.updatePersonaInsights(
+    req.user.id,
+    conversationId,
+    req.body.enabled
+  );
+  res.status(200).json({ data: conversation });
+};

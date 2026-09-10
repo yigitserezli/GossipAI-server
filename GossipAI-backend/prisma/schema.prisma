@@ -104,6 +104,7 @@ model User {
   aiConsentEvents AiConsentEvent[]
   oauthAccounts   OAuthAccount[]
   oauthLoginGrants OAuthLoginGrant[]
+  personas        Persona[]
 
   @@map("users")
 }
@@ -294,15 +295,59 @@ model Conversation {
   relation        String?
   status          ConversationStatus @default(active)
   memoryMode      MemoryMode         @default(summary_only)
+  personaId       String?
+  personaSnapshot Json?
+  personaInsightsEnabled Boolean     @default(false)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages        Message[]
   state           ConversationState?
   sourceMemories  MemoryItem[]
+  persona         Persona?           @relation(fields: [personaId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([personaId])
   @@map("conversations")
+}
+
+model Persona {
+  id                 String          @id @default(uuid())
+  userId             String
+  name               String
+  relationshipType   String
+  avatarEmoji        String?
+  avatarStoragePath  String?
+  themeKey           String          @default("violet")
+  whoIsThis          String?
+  thoughtsFeelings   String?
+  goals              String?
+  currentSituation   String?
+  communicationStyle String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  insight            PersonaInsight?
+  conversations      Conversation[]
+
+  @@index([userId, createdAt])
+  @@map("personas")
+}
+
+model PersonaInsight {
+  personaId                 String   @id
+  summary                   String
+  confidence                Int
+  communicationStyle        String?
+  greenFlagsJson            Json?
+  redFlagsJson              Json?
+  lastMessageExcerpt        String?
+  lastAnalyzedConversationId String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  persona                   Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@map("persona_insights")
 }
 
 model Message {

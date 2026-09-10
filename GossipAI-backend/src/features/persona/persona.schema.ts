@@ -1,0 +1,54 @@
+import { z } from "zod";
+
+export const personaRelationshipSchema = z.enum([
+  "crush",
+  "ex",
+  "partner",
+  "friend",
+  "coworker",
+  "other",
+]);
+
+export const personaThemeSchema = z.enum(["violet", "rose", "ocean", "emerald", "amber"]);
+
+const optionalText = (max: number) => z.string().trim().max(max).optional();
+
+const avatarFields = {
+  avatarEmoji: z.string().trim().min(1).max(16).optional(),
+  avatarImageBase64: z.string().trim().min(32).max(8_000_000).optional(),
+  removeAvatarImage: z.boolean().optional(),
+};
+
+export const createPersonaSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  relationshipType: personaRelationshipSchema,
+  themeKey: personaThemeSchema.default("violet"),
+  whoIsThis: optionalText(2_000),
+  thoughtsFeelings: optionalText(2_000),
+  goals: optionalText(2_000),
+  currentSituation: optionalText(2_000),
+  communicationStyle: optionalText(1_000),
+  ...avatarFields,
+});
+
+export const updatePersonaSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80).optional(),
+    relationshipType: personaRelationshipSchema.optional(),
+    themeKey: personaThemeSchema.optional(),
+    whoIsThis: optionalText(2_000).nullable(),
+    thoughtsFeelings: optionalText(2_000).nullable(),
+    goals: optionalText(2_000).nullable(),
+    currentSituation: optionalText(2_000).nullable(),
+    communicationStyle: optionalText(1_000).nullable(),
+    ...avatarFields,
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one persona field is required.");
+
+export const refreshPersonaInsightsSchema = z.object({
+  conversationId: z.string().uuid().optional(),
+});
+
+export type CreatePersonaInput = z.infer<typeof createPersonaSchema>;
+export type UpdatePersonaInput = z.infer<typeof updatePersonaSchema>;
+export type RefreshPersonaInsightsInput = z.infer<typeof refreshPersonaInsightsSchema>;

@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
+import { getStorage } from "firebase-admin/storage";
 import { env } from "../config/env";
 
 const hasFirebaseConfig =
@@ -16,11 +17,24 @@ if (hasFirebaseConfig && getApps().length === 0) {
       clientEmail: env.FIREBASE_CLIENT_EMAIL,
       privateKey: env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
+    storageBucket:
+      env.FIREBASE_STORAGE_BUCKET ??
+      `${env.FIREBASE_PROJECT_ID}.firebasestorage.app`,
   });
   initialized = true;
 }
 
 export const isFirebaseConfigured = hasFirebaseConfig;
+
+export const getFirebaseStorageBucket = () => {
+  if (!hasFirebaseConfig || !initialized) {
+    throw new Error("Firebase is not configured.");
+  }
+
+  return getStorage().bucket(
+    env.FIREBASE_STORAGE_BUCKET ?? `${env.FIREBASE_PROJECT_ID}.firebasestorage.app`
+  );
+};
 
 export const sendPushToToken = async (payload: {
   token: string;

@@ -9,6 +9,7 @@ import notificationsRouter from "../features/notifications/notifications.routes"
 import subscriptionRouter from "../features/subscription/subscription.routes";
 import dailyInsightRouter from "../features/daily-insight/daily-insight.routes";
 import supportRouter from "../features/support/support.routes";
+import personaRouter from "../features/persona/persona.routes";
 
 const apiRouter = Router();
 
@@ -26,5 +27,6 @@ apiRouter.use("/notifications", notificationsRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/daily-insight", dailyInsightRouter);
 apiRouter.use("/support", supportRouter);
+apiRouter.use("/personas", personaRouter);
 
 export default apiRouter;
