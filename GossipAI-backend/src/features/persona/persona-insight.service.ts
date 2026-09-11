@@ -21,8 +21,12 @@ const parseJson = (value: unknown) => {
 
 const compact = (value: string | null | undefined) => value?.replace(/\s+/g, " ").trim() || "Not provided";
 
+const insightLanguageNames: Record<string, string> = {
+  tr: "Turkish", en: "English", de: "German", fr: "French", it: "Italian", es: "Spanish", "es-419": "Latin American Spanish", pt: "Portuguese", ru: "Russian", uk: "Ukrainian", zh: "Simplified Chinese", ja: "Japanese", ko: "Korean",
+};
+
 export const personaInsightService = {
-  async refresh(userId: string, personaId: string, requestedConversationId?: string) {
+  async refresh(userId: string, personaId: string, requestedConversationId?: string, language = "en") {
     await aiConsentService.requireActive(userId);
     const persona = await prisma.persona.findFirst({ where: { id: personaId, userId } });
     if (!persona) throw new AppError("Persona not found.", 404, undefined, "PERSONA_NOT_FOUND", true);
@@ -47,6 +51,7 @@ export const personaInsightService = {
       "Create relationship insights from only the supplied user context and conversation excerpts.",
       "Do not present assumptions as facts. Avoid diagnosis, certainty, or safety claims.",
       "Return JSON only with summary, confidence (0-100), communicationStyle, greenFlags, redFlags.",
+      `Write every human-readable JSON string in ${insightLanguageNames[language] ?? insightLanguageNames.en}.`,
       `PERSONA NAME: ${persona.name}`,
       `RELATIONSHIP: ${persona.relationshipType}`,
       `WHO THEY ARE: ${compact(persona.whoIsThis)}`,

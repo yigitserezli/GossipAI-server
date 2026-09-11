@@ -20,7 +20,7 @@ export const getPersona: RequestHandler = async (req, res) => res.json({ data: a
 export const createPersona: RequestHandler = async (req, res) => res.status(201).json({ data: await personaService.create(userId(req.user?.id), req.body) });
 export const updatePersona: RequestHandler = async (req, res) => res.json({ data: await personaService.update(userId(req.user?.id), personaId(req.params.id), req.body) });
 export const deletePersona: RequestHandler = async (req, res) => { await personaService.remove(userId(req.user?.id), personaId(req.params.id)); res.status(204).send(); };
-export const refreshPersonaInsights: RequestHandler = async (req, res) => res.json({ data: await personaInsightService.refresh(userId(req.user?.id), personaId(req.params.id), req.body.conversationId) });
+export const refreshPersonaInsights: RequestHandler = async (req, res) => res.json({ data: await personaInsightService.refresh(userId(req.user?.id), personaId(req.params.id), req.body.conversationId, req.body.language) });
 export const createPersonaAvatarUploadUrl: RequestHandler = async (req, res) => res.status(201).json({ data: await r2AvatarService.createUploadUrl(userId(req.user?.id), req.body.contentType) });
 export const startPersonaCharacterAnalysis: RequestHandler = async (req, res) => res.status(201).json({ data: await personaCharacterAnalysisService.start(userId(req.user?.id), personaId(req.params.id)) });
 export const getPersonaCharacterAnalysis: RequestHandler = async (req, res) => res.json({ data: await personaCharacterAnalysisService.get(userId(req.user?.id), personaId(req.params.id)) });

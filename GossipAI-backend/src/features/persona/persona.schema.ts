@@ -49,6 +49,7 @@ export const updatePersonaSchema = z
 
 export const refreshPersonaInsightsSchema = z.object({
   conversationId: z.string().uuid().optional(),
+  language: z.enum(["tr", "en", "de", "fr", "it", "es", "ru", "zh", "ja", "ko", "uk", "pt", "es-419"]).default("en"),
 });
 
 export const createPersonaAvatarUploadUrlSchema = z.object({
