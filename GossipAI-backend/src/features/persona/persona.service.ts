@@ -50,12 +50,12 @@ const toCharacterAnalysis = (analysis: PersonaCharacterAnalysis | null) =>
       }
     : null;
 
-const toResponse = (persona: PersonaWithInsight) => ({
+const toResponse = async (persona: PersonaWithInsight) => ({
   id: persona.id,
   name: persona.name,
   relationshipType: persona.relationshipType,
   avatarEmoji: persona.avatarEmoji,
-  avatarUrl: persona.avatarUrl,
+  avatarUrl: persona.avatarObjectKey ? await r2AvatarService.createReadUrl(persona.avatarObjectKey) : null,
   themeKey: persona.themeKey,
   whoIsThis: persona.whoIsThis,
   thoughtsFeelings: persona.thoughtsFeelings,
@@ -90,10 +90,7 @@ const inputFields = (input: CreatePersonaInput | UpdatePersonaInput) => ({
 });
 
 const validateAvatarInput = (userId: string, input: CreatePersonaInput | UpdatePersonaInput) => {
-  if ((input.avatarUrl && !input.avatarObjectKey) || (!input.avatarUrl && input.avatarObjectKey)) {
-    throw new AppError("Avatar URL and object key must be provided together.", 400, undefined, "INVALID_AVATAR", true);
-  }
-  if (input.avatarUrl && input.avatarObjectKey && !r2AvatarService.isOwnedPublicObject(userId, input.avatarObjectKey, input.avatarUrl)) {
+  if (input.avatarObjectKey && !r2AvatarService.isOwnedObject(userId, input.avatarObjectKey)) {
     throw new AppError("Avatar does not belong to this user.", 403, undefined, "INVALID_AVATAR", true);
   }
 };
@@ -120,7 +117,7 @@ export const personaService = {
       orderBy: { createdAt: "asc" },
       include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
     });
-    return personas.map(toResponse);
+    return Promise.all(personas.map(toResponse));
   },
 
   async get(userId: string, personaId: string) {

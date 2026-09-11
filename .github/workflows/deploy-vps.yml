@@ -20,6 +20,12 @@ jobs:
           cat <<'EOF' > .env
           ${{ secrets.VPS_ENV_FILE }}
           EOF
+          cat <<'EOF' >> .env
+          R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET=${{ secrets.R2_BUCKET }}
+          EOF
 
       - name: Write Google OAuth credentials
         shell: bash

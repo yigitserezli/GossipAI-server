@@ -15,6 +15,7 @@ const optionalText = (max: number) => z.string().trim().max(max).optional();
 
 const avatarFields = {
   avatarEmoji: z.string().trim().min(1).max(16).optional(),
+  // Avatar URLs are generated server-side from the owned R2 object key.
   avatarUrl: z.string().url().max(2_000).optional(),
   avatarObjectKey: z.string().trim().min(1).max(1_024).optional(),
   removeAvatar: z.boolean().optional(),
