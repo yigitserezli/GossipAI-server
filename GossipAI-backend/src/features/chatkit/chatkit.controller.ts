@@ -125,3 +125,11 @@ export const updateChatKitPersonaInsights: RequestHandler = async (req, res) => 
   );
   res.status(200).json({ data: conversation });
 };
+
+export const listChatKitMessages: RequestHandler = async (req, res) => {
+  if (!req.user?.id) throw new AppError("Unauthorized", 401);
+  const conversationId = requireConversationId(req.params.id);
+  const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+  const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : undefined;
+  res.status(200).json({ data: await chatkitService.listMessages(req.user.id, conversationId, cursor, limit) });
+};

@@ -56,6 +56,17 @@ export const createPersonaAvatarUploadUrlSchema = z.object({
   contentType: z.enum(["image/jpeg", "image/png"]),
 });
 
+export const createWhatsAppImportUploadUrlSchema = z.object({
+  filename: z.string().trim().min(5).max(255),
+  contentType: z.enum(["text/plain", "application/zip", "application/x-zip-compressed"]),
+  byteSize: z.number().int().positive().max(12 * 1024 * 1024),
+});
+
+export const createWhatsAppImportSchema = createWhatsAppImportUploadUrlSchema.extend({
+  importId: z.string().uuid(),
+  objectKey: z.string().trim().min(1).max(1_024),
+});
+
 export const characterAnalysisAnswerSchema = z.object({
   score: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(75), z.literal(100), z.null()]),
 });

@@ -330,6 +330,7 @@ model Persona {
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   insight            PersonaInsight?
   characterAnalysis  PersonaCharacterAnalysis?
+  whatsappImports    PersonaWhatsAppImport[]
   conversations      Conversation[]
 
   @@index([userId, createdAt])
@@ -345,11 +346,38 @@ model PersonaInsight {
   redFlagsJson              Json?
   lastMessageExcerpt        String?
   lastAnalyzedConversationId String?
+  relationshipNarrative      String?
+  narrativeLanguage          String?
+  narrativeUpdatedAt         DateTime?
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
   persona                   Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
 
   @@map("persona_insights")
+}
+
+model PersonaWhatsAppImport {
+  id                  String   @id @default(uuid())
+  personaId           String
+  originalFilename    String
+  contentType         String
+  storageObjectKey    String?
+  status              String   @default("queued")
+  attempts            Int      @default(0)
+  messageCount        Int?
+  startedAt           DateTime?
+  endedAt             DateTime?
+  derivedSummary      String?
+  errorCode           String?
+  nextAttemptAt       DateTime @default(now())
+  rawDeletedAt        DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  persona             Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([personaId, createdAt])
+  @@map("persona_whatsapp_imports")
 }
 
 model PersonaCharacterAnalysis {

@@ -56,3 +56,32 @@ export const r2AvatarService = {
     await client().send(new DeleteObjectCommand({ Bucket: settings.bucket, Key: objectKey }));
   },
 };
+
+// The import worker shares the same private R2 bucket. Keeping these helpers
+// here avoids accidentally introducing a second storage configuration.
+export const r2PrivateObjectService = {
+  async createUploadUrl(objectKey: string, contentType: string) {
+    const settings = config();
+    const uploadUrl = await getSignedUrl(
+      client(),
+      new PutObjectCommand({ Bucket: settings.bucket, Key: objectKey, ContentType: contentType }),
+      { expiresIn: URL_TTL_SECONDS }
+    );
+    return { uploadUrl, expiresAt: new Date(Date.now() + URL_TTL_SECONDS * 1000).toISOString() };
+  },
+
+  async read(objectKey: string) {
+    const settings = config();
+    const response = await client().send(new GetObjectCommand({ Bucket: settings.bucket, Key: objectKey }));
+    if (!response.Body) throw new AppError("Uploaded file could not be read.", 422, undefined, "IMPORT_FILE_MISSING", true);
+    const chunks: Buffer[] = [];
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array>) chunks.push(Buffer.from(chunk));
+    return { body: Buffer.concat(chunks), contentType: response.ContentType ?? null };
+  },
+
+  async delete(objectKey: string | null) {
+    if (!objectKey) return;
+    const settings = config();
+    await client().send(new DeleteObjectCommand({ Bucket: settings.bucket, Key: objectKey }));
+  },
+};

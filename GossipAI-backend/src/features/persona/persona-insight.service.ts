@@ -11,6 +11,7 @@ const insightOutputSchema = z.object({
   communicationStyle: z.string().trim().max(800).nullable().optional(),
   greenFlags: z.array(z.string().trim().min(1).max(280)).max(5).default([]),
   redFlags: z.array(z.string().trim().min(1).max(280)).max(5).default([]),
+  relationshipNarrative: z.string().trim().min(1).max(4_000),
 });
 
 const parseJson = (value: unknown) => {
@@ -34,12 +35,12 @@ export const personaInsightService = {
     const conversation = requestedConversationId
       ? await prisma.conversation.findFirst({
           where: { id: requestedConversationId, userId, personaId },
-          select: { id: true, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
+      select: { id: true, state: { select: { rollingSummary: true, factsJson: true, openLoopsJson: true } }, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
         })
       : await prisma.conversation.findFirst({
           where: { userId, personaId },
           orderBy: { updatedAt: "desc" },
-          select: { id: true, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
+      select: { id: true, state: { select: { rollingSummary: true, factsJson: true, openLoopsJson: true } }, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
         });
     if (requestedConversationId && !conversation) {
       throw new AppError("Conversation not found for this persona.", 404, undefined, "PERSONA_CONVERSATION_NOT_FOUND", true);
@@ -47,10 +48,16 @@ export const personaInsightService = {
 
     const messages = [...(conversation?.messages ?? [])].reverse();
     const latestMessage = messages.at(-1)?.content?.trim().slice(0, 500) ?? null;
+    const [imports, optedConversationStates, characterAnalysis] = await Promise.all([
+      prisma.personaWhatsAppImport.findMany({ where: { personaId, status: "completed" }, orderBy: { createdAt: "desc" }, take: 8, select: { derivedSummary: true } }),
+      prisma.conversation.findMany({ where: { userId, personaId, personaInsightsEnabled: true, status: { not: "deleted" } }, orderBy: { updatedAt: "desc" }, take: 8, select: { state: { select: { rollingSummary: true, factsJson: true, openLoopsJson: true } } } }),
+      prisma.personaCharacterAnalysis.findUnique({ where: { personaId }, select: { status: true, primaryTypeId: true, secondaryTraitsJson: true } }),
+    ]);
     const prompt = [
       "Create relationship insights from only the supplied user context and conversation excerpts.",
       "Do not present assumptions as facts. Avoid diagnosis, certainty, or safety claims.",
-      "Return JSON only with summary, confidence (0-100), communicationStyle, greenFlags, redFlags.",
+      "Return JSON only with summary, confidence (0-100), communicationStyle, greenFlags, redFlags, relationshipNarrative.",
+      "relationshipNarrative must be one careful, actionable paragraph grounded in the supplied sources; mention uncertainty where evidence is sparse.",
       `Write every human-readable JSON string in ${insightLanguageNames[language] ?? insightLanguageNames.en}.`,
       `PERSONA NAME: ${persona.name}`,
       `RELATIONSHIP: ${persona.relationshipType}`,
@@ -59,6 +66,11 @@ export const personaInsightService = {
       `USER GOAL: ${compact(persona.goals)}`,
       `CURRENT SITUATION: ${compact(persona.currentSituation)}`,
       `COMMUNICATION STYLE NOTES: ${compact(persona.communicationStyle)}`,
+      `CHARACTER ANALYSIS (deterministic, not a diagnosis): ${characterAnalysis ? JSON.stringify(characterAnalysis) : "Not available"}`,
+      "WHATSAPP-DERIVED SUMMARIES:",
+      imports.length ? imports.map((item, index) => `IMPORT ${index + 1}: ${compact(item.derivedSummary)}`).join("\n") : "No WhatsApp import.",
+      "OPTED-IN PERSONA CHAT MEMORY:",
+      optedConversationStates.length ? optedConversationStates.map((item, index) => `CHAT ${index + 1}: ${JSON.stringify(item.state)}`).join("\n") : "No opted-in chat memory.",
       "CONVERSATION EXCERPTS:",
       messages.length
         ? messages.map((message) => `${message.role}: ${compact(message.content)}`).join("\n")
@@ -90,6 +102,9 @@ export const personaInsightService = {
         redFlagsJson: output.redFlags,
         lastMessageExcerpt: latestMessage,
         lastAnalyzedConversationId: conversation?.id ?? null,
+        relationshipNarrative: output.relationshipNarrative,
+        narrativeLanguage: language,
+        narrativeUpdatedAt: new Date(),
       },
       update: {
         summary: output.summary,
@@ -99,6 +114,9 @@ export const personaInsightService = {
         redFlagsJson: output.redFlags,
         lastMessageExcerpt: latestMessage,
         lastAnalyzedConversationId: conversation?.id ?? null,
+        relationshipNarrative: output.relationshipNarrative,
+        narrativeLanguage: language,
+        narrativeUpdatedAt: new Date(),
       },
     });
 
@@ -110,6 +128,9 @@ export const personaInsightService = {
       redFlags: Array.isArray(insight.redFlagsJson) ? insight.redFlagsJson : [],
       lastMessageExcerpt: insight.lastMessageExcerpt,
       lastAnalyzedConversationId: insight.lastAnalyzedConversationId,
+      relationshipNarrative: insight.relationshipNarrative,
+      narrativeLanguage: insight.narrativeLanguage,
+      narrativeUpdatedAt: insight.narrativeUpdatedAt?.toISOString() ?? null,
       updatedAt: insight.updatedAt.toISOString(),
     };
   },

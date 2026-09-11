@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { authenticate } from "../../shared/middlewares/authenticate";
 import { validateBody } from "../../shared/middlewares/validate-body";
-import { answerPersonaCharacterAnalysis, createPersona, createPersonaAvatarUploadUrl, deletePersona, getPersona, getPersonaCharacterAnalysis, listPersonas, refreshPersonaInsights, startPersonaCharacterAnalysis, updatePersona } from "./persona.controller";
-import { characterAnalysisAnswerSchema, createPersonaAvatarUploadUrlSchema, createPersonaSchema, refreshPersonaInsightsSchema, updatePersonaSchema } from "./persona.schema";
+import { answerPersonaCharacterAnalysis, createPersona, createPersonaAvatarUploadUrl, createWhatsAppImport, createWhatsAppImportUploadUrl, deletePersona, getPersona, getPersonaCharacterAnalysis, listPersonas, listWhatsAppImports, refreshPersonaInsights, refreshRelationshipAnalysis, startPersonaCharacterAnalysis, updatePersona } from "./persona.controller";
+import { characterAnalysisAnswerSchema, createPersonaAvatarUploadUrlSchema, createPersonaSchema, createWhatsAppImportSchema, createWhatsAppImportUploadUrlSchema, refreshPersonaInsightsSchema, updatePersonaSchema } from "./persona.schema";
 
 const personaRouter = Router();
 personaRouter.use(authenticate);
@@ -16,4 +16,8 @@ personaRouter.get("/:id", getPersona);
 personaRouter.patch("/:id", validateBody(updatePersonaSchema), updatePersona);
 personaRouter.delete("/:id", deletePersona);
 personaRouter.post("/:id/insights/refresh", validateBody(refreshPersonaInsightsSchema), refreshPersonaInsights);
+personaRouter.post("/:id/relationship-analysis", refreshRelationshipAnalysis);
+personaRouter.post("/:id/whatsapp-imports/upload-url", validateBody(createWhatsAppImportUploadUrlSchema), createWhatsAppImportUploadUrl);
+personaRouter.post("/:id/whatsapp-imports", validateBody(createWhatsAppImportSchema), createWhatsAppImport);
+personaRouter.get("/:id/whatsapp-imports", listWhatsAppImports);
 export default personaRouter;

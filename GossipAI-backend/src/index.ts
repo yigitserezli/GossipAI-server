@@ -5,6 +5,7 @@ import { startNotificationScheduler, stopNotificationScheduler } from "./feature
 import { startDailyInsightScheduler, stopDailyInsightScheduler } from "./features/daily-insight/daily-insight.scheduler";
 import { startSubscriptionExpiryScheduler, stopSubscriptionExpiryScheduler } from "./features/subscription/subscription.scheduler";
 import { startExternalDeletionScheduler, stopExternalDeletionScheduler } from "./features/account-deletion/external-deletion.scheduler";
+import { startPersonaWhatsAppImportScheduler, stopPersonaWhatsAppImportScheduler } from "./features/persona/persona-whatsapp-import.scheduler";
 import { installOpenAIHttpLogger } from "./lib/openai-http-logger";
 import { prisma } from "./lib/prisma";
 
@@ -28,6 +29,7 @@ const bootstrap = async () => {
   startDailyInsightScheduler();
   startSubscriptionExpiryScheduler();
   startExternalDeletionScheduler();
+  startPersonaWhatsAppImportScheduler();
 
   app.listen(env.PORT, () => {
     console.log(`Server is running on http://localhost:${env.PORT}`);
@@ -39,6 +41,7 @@ const shutdown = async () => {
   stopDailyInsightScheduler();
   stopSubscriptionExpiryScheduler();
   stopExternalDeletionScheduler();
+  stopPersonaWhatsAppImportScheduler();
   await prisma.$disconnect();
 };
 

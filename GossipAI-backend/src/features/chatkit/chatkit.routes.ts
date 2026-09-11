@@ -8,7 +8,8 @@ import {
   getChatKitConversation,
   listChatKitConversations,
   sendChatKitMessage,
-  updateChatKitPersonaInsights
+  updateChatKitPersonaInsights,
+  listChatKitMessages
 } from "./chatkit.controller";
 import { chatkitMessageSchema, emailSummarySchema, updatePersonaInsightsSchema } from "./chatkit.schema";
 
@@ -16,6 +17,7 @@ const chatkitRouter = Router();
 
 chatkitRouter.use(authenticate);
 chatkitRouter.get("/conversations", listChatKitConversations);
+chatkitRouter.get("/conversations/:id/messages", listChatKitMessages);
 chatkitRouter.get("/conversations/:id", getChatKitConversation);
 chatkitRouter.get("/history", listChatKitConversations);
 chatkitRouter.get("/history/:id", getChatKitConversation);

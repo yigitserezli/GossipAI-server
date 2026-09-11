@@ -3,6 +3,7 @@ import { AppError } from "../../shared/errors/app-error";
 import { prisma } from "../../lib/prisma";
 import type { CreatePersonaInput, UpdatePersonaInput } from "./persona.schema";
 import { r2AvatarService } from "./r2-avatar.service";
+import { r2PrivateObjectService } from "./r2-avatar.service";
 
 const MAX_PERSONAS_PER_USER = 5;
 
@@ -17,7 +18,7 @@ export type PersonaContextSnapshot = {
   communicationStyle: string | null;
 };
 
-type PersonaWithInsight = Persona & { insight: PersonaInsight | null; characterAnalysis: PersonaCharacterAnalysis | null; _count?: { conversations: number } };
+type PersonaWithInsight = Persona & { insight: PersonaInsight | null; characterAnalysis: PersonaCharacterAnalysis | null; whatsappImports?: { id: string; status: string; createdAt: Date; updatedAt: Date }[]; _count?: { conversations: number } };
 
 const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -31,6 +32,9 @@ const toInsight = (insight: PersonaInsight | null) =>
         redFlags: Array.isArray(insight.redFlagsJson) ? insight.redFlagsJson : [],
         lastMessageExcerpt: insight.lastMessageExcerpt,
         lastAnalyzedConversationId: insight.lastAnalyzedConversationId,
+        relationshipNarrative: insight.relationshipNarrative,
+        narrativeLanguage: insight.narrativeLanguage,
+        narrativeUpdatedAt: insight.narrativeUpdatedAt?.toISOString() ?? null,
         updatedAt: insight.updatedAt.toISOString(),
       }
     : null;
@@ -64,6 +68,9 @@ const toResponse = async (persona: PersonaWithInsight) => ({
   communicationStyle: persona.communicationStyle,
   insight: toInsight(persona.insight),
   characterAnalysis: toCharacterAnalysis(persona.characterAnalysis),
+  whatsappImport: persona.whatsappImports?.[0]
+    ? { id: persona.whatsappImports[0].id, status: persona.whatsappImports[0].status, createdAt: persona.whatsappImports[0].createdAt.toISOString(), updatedAt: persona.whatsappImports[0].updatedAt.toISOString() }
+    : null,
   conversationCount: persona._count?.conversations ?? 0,
   createdAt: persona.createdAt.toISOString(),
   updatedAt: persona.updatedAt.toISOString(),
@@ -72,7 +79,7 @@ const toResponse = async (persona: PersonaWithInsight) => ({
 const findOwned = async (userId: string, personaId: string) => {
   const persona = await prisma.persona.findFirst({
     where: { id: personaId, userId },
-    include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
+    include: { insight: true, characterAnalysis: true, whatsappImports: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, status: true, createdAt: true, updatedAt: true } }, _count: { select: { conversations: true } } },
   });
   if (!persona) throw new AppError("Persona not found.", 404, undefined, "PERSONA_NOT_FOUND", true);
   return persona;
@@ -115,7 +122,7 @@ export const personaService = {
     const personas = await prisma.persona.findMany({
       where: { userId },
       orderBy: { createdAt: "asc" },
-      include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
+      include: { insight: true, characterAnalysis: true, whatsappImports: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, status: true, createdAt: true, updatedAt: true } }, _count: { select: { conversations: true } } },
     });
     return Promise.all(personas.map(toResponse));
   },
@@ -151,7 +158,7 @@ export const personaService = {
           avatarObjectKey: input.avatarObjectKey,
           ...inputFields(input),
         },
-        include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
+        include: { insight: true, characterAnalysis: true, whatsappImports: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, status: true, createdAt: true, updatedAt: true } }, _count: { select: { conversations: true } } },
       });
     });
 
@@ -171,7 +178,7 @@ export const personaService = {
         ...(hasNewAvatar ? { avatarUrl: input.avatarUrl, avatarObjectKey: input.avatarObjectKey } : {}),
         ...(input.removeAvatar ? { avatarUrl: null, avatarObjectKey: null } : {}),
       },
-      include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
+      include: { insight: true, characterAnalysis: true, whatsappImports: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, status: true, createdAt: true, updatedAt: true } }, _count: { select: { conversations: true } } },
     });
     if ((input.removeAvatar || hasNewAvatar) && existing.avatarObjectKey) {
       await r2AvatarService.delete(existing.avatarObjectKey).catch(() => undefined);
@@ -181,8 +188,10 @@ export const personaService = {
 
   async remove(userId: string, personaId: string) {
     const persona = await findOwned(userId, personaId);
+    const importKeys = await prisma.personaWhatsAppImport.findMany({ where: { personaId: persona.id }, select: { storageObjectKey: true } });
     await prisma.persona.delete({ where: { id: persona.id } });
     await r2AvatarService.delete(persona.avatarObjectKey).catch(() => undefined);
+    await Promise.all(importKeys.map((item) => r2PrivateObjectService.delete(item.storageObjectKey).catch(() => undefined)));
   },
 
   asJson(snapshot: PersonaContextSnapshot) {
