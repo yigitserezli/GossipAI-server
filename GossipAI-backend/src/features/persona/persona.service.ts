@@ -1,4 +1,4 @@
-import type { Persona, PersonaCharacterAnalysis, PersonaInsight, Prisma } from "@prisma/client";
+import { SubscriptionPlan, type Persona, type PersonaCharacterAnalysis, type PersonaInsight, type Prisma } from "@prisma/client";
 import { AppError } from "../../shared/errors/app-error";
 import { prisma } from "../../lib/prisma";
 import type { CreatePersonaInput, UpdatePersonaInput } from "./persona.schema";
@@ -6,6 +6,7 @@ import { r2AvatarService } from "./r2-avatar.service";
 import { r2PrivateObjectService } from "./r2-avatar.service";
 
 const MAX_PERSONAS_PER_USER = 5;
+const FREE_PERSONA_LIMIT = 1;
 
 export type PersonaContextSnapshot = {
   id: string;
@@ -143,7 +144,18 @@ export const personaService = {
       // row is portable across our PostgreSQL connection setup and keeps the
       // following count/create sequence atomically capped at five.
       await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { plan: true } });
+      if (!user) throw new AppError("User not found.", 404, undefined, "USER_NOT_FOUND", true);
       const count = await tx.persona.count({ where: { userId } });
+      if (user.plan !== SubscriptionPlan.premium && count >= FREE_PERSONA_LIMIT) {
+        throw new AppError(
+          "Premium membership is required to create more than one persona.",
+          403,
+          { max: FREE_PERSONA_LIMIT },
+          "PREMIUM_MODE_REQUIRED",
+          true,
+        );
+      }
       if (count >= MAX_PERSONAS_PER_USER) {
         throw new AppError("You can create up to 5 personas.", 409, { max: MAX_PERSONAS_PER_USER }, "PERSONA_LIMIT_REACHED", true);
       }
