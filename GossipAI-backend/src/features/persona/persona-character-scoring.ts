@@ -1,27 +1,31 @@
-export const PERSONA_CHARACTER_SCORING_VERSION = "persona-character-v1";
+export const PERSONA_CHARACTER_SCORING_VERSION = "persona-character-v2";
 
 export const CHARACTER_DIMENSIONS = ["EO", "CO", "EM", "DI", "CE", "IN", "IT", "ST", "BR", "VN"] as const;
 export type CharacterDimension = (typeof CHARACTER_DIMENSIONS)[number];
 export type CharacterAnswerScore = 0 | 25 | 50 | 75 | 100 | null;
 export type CharacterAnalysisStatus = "in_progress" | "insufficient_confidence" | "complete";
 
-type QuestionDefinition = { id: string; dimension: CharacterDimension; reverse?: boolean };
+export type CharacterQuestionPhase = "core" | "deepen";
+type QuestionDefinition = { id: string; dimension: CharacterDimension; phase: CharacterQuestionPhase; reverse?: boolean };
 type Target = "H" | "M" | "L";
 type ArchetypeDefinition = { id: string; priority: number; matrix: Partial<Record<CharacterDimension, [Target, 1 | 2]>> };
 type TraitDefinition = { high: string; low: string };
 
 export const CHARACTER_QUESTION_DEFINITIONS: QuestionDefinition[] = [
-  { id: "Q01", dimension: "EO" }, { id: "Q02", dimension: "EO" }, { id: "Q03", dimension: "EO", reverse: true }, { id: "Q04", dimension: "EO" },
-  { id: "Q05", dimension: "CO" }, { id: "Q06", dimension: "CO" }, { id: "Q07", dimension: "CO", reverse: true }, { id: "Q08", dimension: "CO" },
-  { id: "Q09", dimension: "EM" }, { id: "Q10", dimension: "EM" }, { id: "Q11", dimension: "EM", reverse: true }, { id: "Q12", dimension: "EM" },
-  { id: "Q13", dimension: "DI" }, { id: "Q14", dimension: "DI", reverse: true }, { id: "Q15", dimension: "DI" }, { id: "Q16", dimension: "DI", reverse: true },
-  { id: "Q17", dimension: "CE" }, { id: "Q18", dimension: "CE" }, { id: "Q19", dimension: "CE", reverse: true }, { id: "Q20", dimension: "CE" },
-  { id: "Q21", dimension: "IN" }, { id: "Q22", dimension: "IN" }, { id: "Q23", dimension: "IN" }, { id: "Q24", dimension: "IN", reverse: true },
-  { id: "Q25", dimension: "IT" }, { id: "Q26", dimension: "IT" }, { id: "Q27", dimension: "IT", reverse: true }, { id: "Q28", dimension: "IT" },
-  { id: "Q29", dimension: "ST" }, { id: "Q30", dimension: "ST", reverse: true }, { id: "Q31", dimension: "ST" }, { id: "Q32", dimension: "ST", reverse: true },
-  { id: "Q33", dimension: "BR" }, { id: "Q34", dimension: "BR" }, { id: "Q35", dimension: "BR", reverse: true }, { id: "Q36", dimension: "BR" },
-  { id: "Q37", dimension: "VN" }, { id: "Q38", dimension: "VN" }, { id: "Q39", dimension: "VN", reverse: true }, { id: "Q40", dimension: "VN" },
+  { id: "Q01", dimension: "EO", phase: "core" }, { id: "Q02", dimension: "EO", phase: "core" }, { id: "Q03", dimension: "EO", phase: "deepen", reverse: true }, { id: "Q04", dimension: "EO", phase: "deepen" },
+  { id: "Q05", dimension: "CO", phase: "core" }, { id: "Q06", dimension: "CO", phase: "core" }, { id: "Q07", dimension: "CO", phase: "deepen", reverse: true }, { id: "Q08", dimension: "CO", phase: "deepen" },
+  { id: "Q09", dimension: "EM", phase: "core" }, { id: "Q10", dimension: "EM", phase: "core" }, { id: "Q11", dimension: "EM", phase: "deepen", reverse: true }, { id: "Q12", dimension: "EM", phase: "deepen" },
+  { id: "Q13", dimension: "DI", phase: "core" }, { id: "Q14", dimension: "DI", phase: "core", reverse: true }, { id: "Q15", dimension: "DI", phase: "deepen" }, { id: "Q16", dimension: "DI", phase: "deepen", reverse: true },
+  { id: "Q17", dimension: "CE", phase: "core" }, { id: "Q18", dimension: "CE", phase: "core" }, { id: "Q19", dimension: "CE", phase: "deepen", reverse: true }, { id: "Q20", dimension: "CE", phase: "deepen" },
+  { id: "Q21", dimension: "IN", phase: "core" }, { id: "Q22", dimension: "IN", phase: "core" }, { id: "Q23", dimension: "IN", phase: "deepen" }, { id: "Q24", dimension: "IN", phase: "deepen", reverse: true },
+  { id: "Q25", dimension: "IT", phase: "core" }, { id: "Q26", dimension: "IT", phase: "core" }, { id: "Q27", dimension: "IT", phase: "deepen", reverse: true }, { id: "Q28", dimension: "IT", phase: "deepen" },
+  { id: "Q29", dimension: "ST", phase: "core" }, { id: "Q30", dimension: "ST", phase: "core", reverse: true }, { id: "Q31", dimension: "ST", phase: "deepen" }, { id: "Q32", dimension: "ST", phase: "deepen", reverse: true },
+  { id: "Q33", dimension: "BR", phase: "core" }, { id: "Q34", dimension: "BR", phase: "core" }, { id: "Q35", dimension: "BR", phase: "deepen", reverse: true }, { id: "Q36", dimension: "BR", phase: "deepen" },
+  { id: "Q37", dimension: "VN", phase: "core" }, { id: "Q38", dimension: "VN", phase: "core" }, { id: "Q39", dimension: "VN", phase: "deepen", reverse: true }, { id: "Q40", dimension: "VN", phase: "deepen" },
 ];
+
+export const CORE_CHARACTER_QUESTION_DEFINITIONS = CHARACTER_QUESTION_DEFINITIONS.filter((question) => question.phase === "core");
+export const DEEPEN_CHARACTER_QUESTION_DEFINITIONS = CHARACTER_QUESTION_DEFINITIONS.filter((question) => question.phase === "deepen");
 
 const archetypes: ArchetypeDefinition[] = [
   { id: "open_book", priority: 0, matrix: { EO: ["H", 2], CO: ["H", 1], DI: ["H", 2], CE: ["H", 1], ST: ["H", 1] } },
@@ -48,6 +52,7 @@ const targetValue: Record<Target, number> = { H: 85, M: 50, L: 15 };
 const questionById = new Map(CHARACTER_QUESTION_DEFINITIONS.map((question) => [question.id, question]));
 
 export const isCharacterQuestionId = (value: string) => questionById.has(value);
+export const isCoreCharacterQuestionId = (value: string) => questionById.get(value)?.phase === "core";
 
 export type CharacterAnalysisResult = {
   status: CharacterAnalysisStatus;
@@ -68,17 +73,20 @@ export const calculatePersonaCharacterAnalysis = (rawAnswers: { questionId: stri
   const dimensionConfidences = {} as Record<CharacterDimension, number>;
 
   for (const dimension of CHARACTER_DIMENSIONS) {
-    const values = CHARACTER_QUESTION_DEFINITIONS
-      .filter((question) => question.dimension === dimension)
+    const dimensionQuestions = CHARACTER_QUESTION_DEFINITIONS.filter((question) => question.dimension === dimension);
+    const answeredDeepenQuestion = dimensionQuestions.some((question) => question.phase === "deepen" && answers.has(question.id));
+    const expectedQuestions = answeredDeepenQuestion ? dimensionQuestions : dimensionQuestions.filter((question) => question.phase === "core");
+    const values = expectedQuestions
       .map((question) => ({ question, score: answers.get(question.id) }))
       .filter((entry): entry is { question: QuestionDefinition; score: number } => typeof entry.score === "number")
       .map(({ question, score }) => question.reverse ? 100 - score : score);
-    dimensionConfidences[dimension] = values.length / 4;
+    dimensionConfidences[dimension] = values.length / expectedQuestions.length;
     dimensionScores[dimension] = values.length >= 2 ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
   }
 
   const answeredQuestionCount = [...answers.values()].filter((score) => typeof score === "number").length;
   const completedQuestionCount = answers.size;
+  const completedCoreQuestionCount = CORE_CHARACTER_QUESTION_DEFINITIONS.filter((question) => answers.has(question.id)).length;
   const ranked = archetypes.map((archetype) => {
     let weightedTotal = 0;
     let confidenceWeight = 0;
@@ -95,7 +103,10 @@ export const calculatePersonaCharacterAnalysis = (rawAnswers: { questionId: stri
   }).sort((left, right) => Math.abs(right.score - left.score) < 0.01 ? left.priority - right.priority : right.score - left.score);
 
   const winner = ranked[0];
-  const eligible = answeredQuestionCount >= 24 && winner.coverage >= 0.65 && winner.score >= 68;
+  const eligible = completedCoreQuestionCount === CORE_CHARACTER_QUESTION_DEFINITIONS.length
+    && answeredQuestionCount >= 14
+    && winner.coverage >= 0.65
+    && winner.score >= 68;
   const secondaryTraits = CHARACTER_DIMENSIONS
     .flatMap((dimension) => {
       const score = dimensionScores[dimension];
@@ -107,7 +118,7 @@ export const calculatePersonaCharacterAnalysis = (rawAnswers: { questionId: stri
     .slice(0, 3);
 
   return {
-    status: eligible ? "complete" : answeredQuestionCount || completedQuestionCount ? "insufficient_confidence" : "in_progress",
+    status: eligible ? "complete" : completedCoreQuestionCount === CORE_CHARACTER_QUESTION_DEFINITIONS.length ? "insufficient_confidence" : "in_progress",
     scoringVersion: PERSONA_CHARACTER_SCORING_VERSION,
     answeredQuestionCount,
     completedQuestionCount,
