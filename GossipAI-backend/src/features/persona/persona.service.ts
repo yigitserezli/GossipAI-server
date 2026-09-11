@@ -132,7 +132,9 @@ export const personaService = {
   async create(userId: string, input: CreatePersonaInput) {
     validateAvatarInput(userId, input);
     const persona = await prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+      // Cast explicitly: authenticated user ids are UUID-shaped and PostgreSQL
+      // otherwise may resolve hashtext's argument as UUID instead of text.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}::text))`;
       const count = await tx.persona.count({ where: { userId } });
       if (count >= MAX_PERSONAS_PER_USER) {
         throw new AppError("You can create up to 5 personas.", 409, { max: MAX_PERSONAS_PER_USER }, "PERSONA_LIMIT_REACHED", true);
