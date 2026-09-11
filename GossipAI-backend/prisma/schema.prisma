@@ -329,6 +329,7 @@ model Persona {
   updatedAt          DateTime        @updatedAt
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   insight            PersonaInsight?
+  characterAnalysis  PersonaCharacterAnalysis?
   conversations      Conversation[]
 
   @@index([userId, createdAt])
@@ -349,6 +350,39 @@ model PersonaInsight {
   persona                   Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
 
   @@map("persona_insights")
+}
+
+model PersonaCharacterAnalysis {
+  personaId                 String                     @id
+  status                    String                     @default("in_progress")
+  scoringVersion            String                     @default("persona-character-v1")
+  answeredQuestionCount     Int                        @default(0)
+  completedQuestionCount    Int                        @default(0)
+  dimensionScoresJson       Json?
+  dimensionConfidencesJson  Json?
+  primaryTypeId             String?
+  primaryTypeScore          Float?
+  primaryTypeCoverage       Float?
+  secondaryTraitsJson       Json?
+  lastCalculatedAt          DateTime                   @default(now())
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  persona                   Persona                    @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  answers                   PersonaCharacterAnswer[]
+
+  @@map("persona_character_analyses")
+}
+
+model PersonaCharacterAnswer {
+  personaId     String
+  questionId    String
+  score         Int?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  analysis      PersonaCharacterAnalysis @relation(fields: [personaId], references: [personaId], onDelete: Cascade)
+
+  @@id([personaId, questionId])
+  @@map("persona_character_answers")
 }
 
 model Message {

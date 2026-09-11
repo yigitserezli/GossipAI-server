@@ -54,6 +54,11 @@ export const createPersonaAvatarUploadUrlSchema = z.object({
   contentType: z.enum(["image/jpeg", "image/png"]),
 });
 
+export const characterAnalysisAnswerSchema = z.object({
+  score: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(75), z.literal(100), z.null()]),
+});
+
 export type CreatePersonaInput = z.infer<typeof createPersonaSchema>;
 export type UpdatePersonaInput = z.infer<typeof updatePersonaSchema>;
 export type RefreshPersonaInsightsInput = z.infer<typeof refreshPersonaInsightsSchema>;
+export type CharacterAnalysisAnswerInput = z.infer<typeof characterAnalysisAnswerSchema>;

@@ -1,4 +1,4 @@
-import type { Persona, PersonaInsight, Prisma } from "@prisma/client";
+import type { Persona, PersonaCharacterAnalysis, PersonaInsight, Prisma } from "@prisma/client";
 import { AppError } from "../../shared/errors/app-error";
 import { prisma } from "../../lib/prisma";
 import type { CreatePersonaInput, UpdatePersonaInput } from "./persona.schema";
@@ -17,7 +17,7 @@ export type PersonaContextSnapshot = {
   communicationStyle: string | null;
 };
 
-type PersonaWithInsight = Persona & { insight: PersonaInsight | null; _count?: { conversations: number } };
+type PersonaWithInsight = Persona & { insight: PersonaInsight | null; characterAnalysis: PersonaCharacterAnalysis | null; _count?: { conversations: number } };
 
 const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -35,6 +35,21 @@ const toInsight = (insight: PersonaInsight | null) =>
       }
     : null;
 
+const toCharacterAnalysis = (analysis: PersonaCharacterAnalysis | null) =>
+  analysis
+    ? {
+        status: analysis.status,
+        scoringVersion: analysis.scoringVersion,
+        answeredQuestionCount: analysis.answeredQuestionCount,
+        completedQuestionCount: analysis.completedQuestionCount,
+        primaryTypeId: analysis.primaryTypeId,
+        primaryTypeScore: analysis.primaryTypeScore,
+        primaryTypeCoverage: analysis.primaryTypeCoverage,
+        secondaryTraits: analysis.secondaryTraitsJson ?? [],
+        lastCalculatedAt: analysis.lastCalculatedAt.toISOString(),
+      }
+    : null;
+
 const toResponse = (persona: PersonaWithInsight) => ({
   id: persona.id,
   name: persona.name,
@@ -48,6 +63,7 @@ const toResponse = (persona: PersonaWithInsight) => ({
   currentSituation: persona.currentSituation,
   communicationStyle: persona.communicationStyle,
   insight: toInsight(persona.insight),
+  characterAnalysis: toCharacterAnalysis(persona.characterAnalysis),
   conversationCount: persona._count?.conversations ?? 0,
   createdAt: persona.createdAt.toISOString(),
   updatedAt: persona.updatedAt.toISOString(),
@@ -56,7 +72,7 @@ const toResponse = (persona: PersonaWithInsight) => ({
 const findOwned = async (userId: string, personaId: string) => {
   const persona = await prisma.persona.findFirst({
     where: { id: personaId, userId },
-    include: { insight: true, _count: { select: { conversations: true } } },
+    include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
   });
   if (!persona) throw new AppError("Persona not found.", 404, undefined, "PERSONA_NOT_FOUND", true);
   return persona;
@@ -102,7 +118,7 @@ export const personaService = {
     const personas = await prisma.persona.findMany({
       where: { userId },
       orderBy: { createdAt: "asc" },
-      include: { insight: true, _count: { select: { conversations: true } } },
+      include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
     });
     return personas.map(toResponse);
   },
@@ -135,7 +151,7 @@ export const personaService = {
           avatarObjectKey: input.avatarObjectKey,
           ...inputFields(input),
         },
-        include: { insight: true, _count: { select: { conversations: true } } },
+        include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
       });
     });
 
@@ -155,7 +171,7 @@ export const personaService = {
         ...(hasNewAvatar ? { avatarUrl: input.avatarUrl, avatarObjectKey: input.avatarObjectKey } : {}),
         ...(input.removeAvatar ? { avatarUrl: null, avatarObjectKey: null } : {}),
       },
-      include: { insight: true, _count: { select: { conversations: true } } },
+      include: { insight: true, characterAnalysis: true, _count: { select: { conversations: true } } },
     });
     if ((input.removeAvatar || hasNewAvatar) && existing.avatarObjectKey) {
       await r2AvatarService.delete(existing.avatarObjectKey).catch(() => undefined);
