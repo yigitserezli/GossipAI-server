@@ -26,6 +26,7 @@ const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJ
 const toInsight = (insight: PersonaInsight | null) =>
   insight
     ? {
+        personaMemory: insight.personaMemoryJson,
         summary: insight.summary,
         confidence: insight.confidence,
         communicationStyle: insight.communicationStyle,

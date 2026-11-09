@@ -36,6 +36,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1),
   OPENAI_MODEL: z.string().min(1).default("gpt-4o-mini"),
   OPENAI_AGENT_MODEL: z.string().min(1).default("gpt-4o-mini"),
+  OPENAI_PERSONA_AGENT_ID: optionalTrimmedString,
   OPENAI_ASSISTANT_ID: optionalTrimmedString,
   OPENAI_WORKFLOW_ID: optionalTrimmedString,
   OPENAI_WORKFLOW_VERSION: optionalTrimmedString,

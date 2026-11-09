@@ -65,6 +65,7 @@ export const createWhatsAppImportUploadUrlSchema = z.object({
 export const createWhatsAppImportSchema = createWhatsAppImportUploadUrlSchema.extend({
   importId: z.string().uuid(),
   objectKey: z.string().trim().min(1).max(1_024),
+  language: refreshPersonaInsightsSchema.shape.language,
 });
 
 export const characterAnalysisAnswerSchema = z.object({
@@ -75,3 +76,8 @@ export type CreatePersonaInput = z.infer<typeof createPersonaSchema>;
 export type UpdatePersonaInput = z.infer<typeof updatePersonaSchema>;
 export type RefreshPersonaInsightsInput = z.infer<typeof refreshPersonaInsightsSchema>;
 export type CharacterAnalysisAnswerInput = z.infer<typeof characterAnalysisAnswerSchema>;
+
+export const confirmWhatsAppParticipantsSchema = z.object({
+  userParticipant: z.string().trim().min(1).max(200),
+  personaParticipant: z.string().trim().min(1).max(200),
+}).refine((input) => input.userParticipant !== input.personaParticipant, "Participants must be different.");

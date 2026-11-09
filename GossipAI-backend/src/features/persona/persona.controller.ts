@@ -30,3 +30,6 @@ export const createWhatsAppImportUploadUrl: RequestHandler = async (req, res) =>
 export const createWhatsAppImport: RequestHandler = async (req, res) => res.status(201).json({ data: await personaWhatsAppImportService.create(userId(req.user?.id), personaId(req.params.id), req.body) });
 export const listWhatsAppImports: RequestHandler = async (req, res) => res.json({ data: await personaWhatsAppImportService.list(userId(req.user?.id), personaId(req.params.id)) });
 export const refreshRelationshipAnalysis: RequestHandler = async (req, res) => res.json({ data: await personaInsightService.refresh(userId(req.user?.id), personaId(req.params.id), undefined, req.body?.language) });
+
+export const confirmWhatsAppParticipants: RequestHandler = async (req, res) => res.json({ data: await personaWhatsAppImportService.confirmParticipants(userId(req.user?.id), personaId(req.params.id), personaId(req.params.importId), req.body) });
+export const retryWhatsAppImport: RequestHandler = async (req, res) => res.json({ data: await personaWhatsAppImportService.retry(userId(req.user?.id), personaId(req.params.id), personaId(req.params.importId)) });

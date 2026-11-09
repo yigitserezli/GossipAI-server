@@ -288,9 +288,10 @@ export const conversationService = {
     });
   },
 
-  async create(userId: string, input: CreateConversationInput) {
+  async create(userId: string, input: CreateConversationInput, id?: string) {
     const conversation = await prisma.conversation.create({
       data: {
+        ...(id ? { id } : {}),
         userId,
         title: input.title ?? null,
         mode: input.mode ?? "HELP_ME_REPLY",

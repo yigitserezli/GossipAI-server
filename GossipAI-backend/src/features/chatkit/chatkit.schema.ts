@@ -22,6 +22,10 @@ export const chatkitRelationSchema = z.enum([
 
 export const chatkitMessageSchema = z.object({
   content: z.string().trim().min(1).max(100_000),
+  requestId: z.string().uuid().optional(),
+  newConversation: z.boolean().optional(),
+  experience: z.literal("conversation").optional(),
+  language: z.enum(["tr", "en", "de", "fr", "it", "es", "ru", "zh", "ja", "ko", "uk", "pt", "es-419"]).optional(),
   conversationId: z.string().trim().min(1).optional(),
   personaId: z.string().uuid().optional(),
   personaInsightsEnabled: z.boolean().optional(),

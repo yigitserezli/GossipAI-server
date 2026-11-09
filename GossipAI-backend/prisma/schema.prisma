@@ -346,6 +346,8 @@ model PersonaInsight {
   redFlagsJson              Json?
   lastMessageExcerpt        String?
   lastAnalyzedConversationId String?
+  personaMemoryJson          Json?
+  evidenceSnapshotAt         DateTime?
   relationshipNarrative      String?
   narrativeLanguage          String?
   narrativeUpdatedAt         DateTime?
@@ -360,6 +362,18 @@ model PersonaWhatsAppImport {
   id                  String   @id @default(uuid())
   personaId           String
   originalFilename    String
+  byteSize            Int?
+  language            String   @default("en")
+  participantsJson    Json?
+  userParticipant     String?
+  personaParticipant  String?
+  contentHash         String?
+  evidenceJson        Json?
+  analysisJson        Json?
+  processedChunks     Int      @default(0)
+  totalChunks         Int      @default(0)
+  workerToken         String?
+  leaseUntil          DateTime?
   contentType         String
   storageObjectKey    String?
   status              String   @default("queued")
@@ -376,6 +390,7 @@ model PersonaWhatsAppImport {
   persona             Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
 
   @@index([status, nextAttemptAt])
+  @@unique([personaId, contentHash])
   @@index([personaId, createdAt])
   @@map("persona_whatsapp_imports")
 }
@@ -423,6 +438,9 @@ model Message {
   imageDescription String?
   tokensIn         Int?
   tokensOut        Int?
+  // Only client-addressable user turns carry reply lifecycle state.
+  replyStatus      String?
+  replyErrorCode   String?
   createdAt        DateTime     @default(now())
   conversation     Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 

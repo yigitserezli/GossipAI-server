@@ -1,47 +1,29 @@
-import { Agent, Runner } from "@openai/agents";
-import { z } from "zod";
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../shared/errors/app-error";
 import { aiConsentService } from "../auth/ai-consent.service";
+import { buildPersonaInsightAgentPayload } from "./persona-insight.contract";
+import { runPersonaAgent, runStructuredPersonaAgent } from "./persona-agent.client";
+import { personaMemoryService } from "./persona-memory.service";
 
-const insightOutputSchema = z.object({
-  summary: z.string().trim().min(1).max(1_200),
-  confidence: z.number().int().min(0).max(100),
-  communicationStyle: z.string().trim().max(800).nullable().optional(),
-  greenFlags: z.array(z.string().trim().min(1).max(280)).max(5).default([]),
-  redFlags: z.array(z.string().trim().min(1).max(280)).max(5).default([]),
-  relationshipNarrative: z.string().trim().min(1).max(4_000),
-});
+import { WHATSAPP_ANALYSIS_TASK, readWhatsAppEvidence, whatsappDeepOutputSchema, whatsappMemorySchema, assertKnownSources } from "./whatsapp-analysis.contract";
+import { personaInsightRepository } from "./persona-insight.repository";
 
-const parseJson = (value: unknown) => {
-  const text = typeof value === "string" ? value.trim() : "";
-  const normalized = text.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-  return insightOutputSchema.parse(JSON.parse(normalized));
-};
-
-const compact = (value: string | null | undefined) => value?.replace(/\s+/g, " ").trim() || "Not provided";
-
-const insightLanguageNames: Record<string, string> = {
-  tr: "Turkish", en: "English", de: "German", fr: "French", it: "Italian", es: "Spanish", "es-419": "Latin American Spanish", pt: "Portuguese", ru: "Russian", uk: "Ukrainian", zh: "Simplified Chinese", ja: "Japanese", ko: "Korean",
-};
+export const personaInsightInference = { run: runPersonaAgent, runDeep: runStructuredPersonaAgent };
 
 export const personaInsightService = {
-  async refresh(userId: string, personaId: string, requestedConversationId?: string, language = "en") {
+  async refresh(userId: string, personaId: string, requestedConversationId?: string, language = "en", importJob?: { id: string; workerToken: string }) {
+    const snapshotAt = new Date();
     await aiConsentService.requireActive(userId);
-    const persona = await prisma.persona.findFirst({ where: { id: personaId, userId } });
+    const persona = await prisma.persona.findFirst({ where: { id: personaId, userId }, include: { insight: { select: { personaId: true } } } });
     if (!persona) throw new AppError("Persona not found.", 404, undefined, "PERSONA_NOT_FOUND", true);
 
     const conversation = requestedConversationId
       ? await prisma.conversation.findFirst({
-          where: { id: requestedConversationId, userId, personaId },
-      select: { id: true, state: { select: { rollingSummary: true, factsJson: true, openLoopsJson: true } }, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
+          where: { id: requestedConversationId, userId, personaId, personaInsightsEnabled: true, status: { not: "deleted" } },
+          select: { id: true, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
         })
-      : await prisma.conversation.findFirst({
-          where: { userId, personaId },
-          orderBy: { updatedAt: "desc" },
-      select: { id: true, state: { select: { rollingSummary: true, factsJson: true, openLoopsJson: true } }, messages: { orderBy: { createdAt: "desc" }, take: 12, select: { role: true, content: true } } },
-        });
+      : null;
     if (requestedConversationId && !conversation) {
       throw new AppError("Conversation not found for this persona.", 404, undefined, "PERSONA_CONVERSATION_NOT_FOUND", true);
     }
@@ -49,78 +31,61 @@ export const personaInsightService = {
     const messages = [...(conversation?.messages ?? [])].reverse();
     const latestMessage = messages.at(-1)?.content?.trim().slice(0, 500) ?? null;
     const [imports, optedConversationStates, characterAnalysis] = await Promise.all([
-      prisma.personaWhatsAppImport.findMany({ where: { personaId, status: "completed" }, orderBy: { createdAt: "desc" }, take: 8, select: { derivedSummary: true } }),
-      prisma.conversation.findMany({ where: { userId, personaId, personaInsightsEnabled: true, status: { not: "deleted" } }, orderBy: { updatedAt: "desc" }, take: 8, select: { state: { select: { rollingSummary: true, factsJson: true, openLoopsJson: true } } } }),
+      prisma.personaWhatsAppImport.findMany({ where: { personaId, OR: [{ status: "completed" }, ...(importJob ? [{ id: importJob.id, status: "processing", workerToken: importJob.workerToken }] : [])] }, orderBy: { createdAt: "desc" }, select: { id: true, derivedSummary: true, evidenceJson: true } }),
+      personaMemoryService.list(userId, personaId),
       prisma.personaCharacterAnalysis.findUnique({ where: { personaId }, select: { status: true, primaryTypeId: true, secondaryTraitsJson: true } }),
     ]);
-    const prompt = [
-      "Create relationship insights from only the supplied user context and conversation excerpts.",
-      "Do not present assumptions as facts. Avoid diagnosis, certainty, or safety claims.",
-      "Return JSON only with summary, confidence (0-100), communicationStyle, greenFlags, redFlags, relationshipNarrative.",
-      "relationshipNarrative must be one careful, actionable paragraph grounded in the supplied sources; mention uncertainty where evidence is sparse.",
-      `Write every human-readable JSON string in ${insightLanguageNames[language] ?? insightLanguageNames.en}.`,
-      `PERSONA NAME: ${persona.name}`,
-      `RELATIONSHIP: ${persona.relationshipType}`,
-      `WHO THEY ARE: ${compact(persona.whoIsThis)}`,
-      `USER FEELINGS: ${compact(persona.thoughtsFeelings)}`,
-      `USER GOAL: ${compact(persona.goals)}`,
-      `CURRENT SITUATION: ${compact(persona.currentSituation)}`,
-      `COMMUNICATION STYLE NOTES: ${compact(persona.communicationStyle)}`,
-      `CHARACTER ANALYSIS (deterministic, not a diagnosis): ${characterAnalysis ? JSON.stringify(characterAnalysis) : "Not available"}`,
-      "WHATSAPP-DERIVED SUMMARIES:",
-      imports.length ? imports.map((item, index) => `IMPORT ${index + 1}: ${compact(item.derivedSummary)}`).join("\n") : "No WhatsApp import.",
-      "OPTED-IN PERSONA CHAT MEMORY:",
-      optedConversationStates.length ? optedConversationStates.map((item, index) => `CHAT ${index + 1}: ${JSON.stringify(item.state)}`).join("\n") : "No opted-in chat memory.",
-      "CONVERSATION EXCERPTS:",
-      messages.length
-        ? messages.map((message) => `${message.role}: ${compact(message.content)}`).join("\n")
-        : "No persona chat messages yet.",
-    ].join("\n");
-
-    const agent = new Agent({
-      name: "PERSONA_INSIGHTS",
-      model: env.OPENAI_AGENT_MODEL,
-      instructions: "You are a cautious relationship-context summarizer. Follow the requested JSON schema exactly.",
+    const payload = buildPersonaInsightAgentPayload({
+      language,
+      isInitialAssessment: !persona.insight,
+      persona,
+      characterAnalysis: characterAnalysis?.status === "complete" ? characterAnalysis : null,
+      whatsappSummaries: imports.map((item) => item.derivedSummary),
+      optedInConversationMemory: optedConversationStates,
+      selectedConversation: conversation
+        ? { id: conversation.id, messages: messages.map((message) => ({ role: message.role, content: message.content })) }
+        : null,
     });
-    const runner = new Runner({ tracingDisabled: true, traceIncludeSensitiveData: false });
-    const result = await runner.run(agent, [{ role: "user", content: prompt }]);
-    let output;
-    try {
-      output = parseJson(result.finalOutput);
-    } catch {
-      throw new AppError("Persona insight generation returned an invalid result.", 502, undefined, "PERSONA_INSIGHT_INVALID", true);
+    if (!env.OPENAI_PERSONA_AGENT_ID) {
+      throw new AppError("Persona agent is not configured.", 503, undefined, "PERSONA_AGENT_NOT_CONFIGURED", true);
     }
-
-    const insight = await prisma.personaInsight.upsert({
-      where: { personaId },
-      create: {
-        personaId,
-        summary: output.summary,
-        confidence: output.confidence,
-        communicationStyle: output.communicationStyle ?? null,
-        greenFlagsJson: output.greenFlags,
-        redFlagsJson: output.redFlags,
-        lastMessageExcerpt: latestMessage,
-        lastAnalyzedConversationId: conversation?.id ?? null,
-        relationshipNarrative: output.relationshipNarrative,
-        narrativeLanguage: language,
-        narrativeUpdatedAt: new Date(),
-      },
-      update: {
-        summary: output.summary,
-        confidence: output.confidence,
-        communicationStyle: output.communicationStyle ?? null,
-        greenFlagsJson: output.greenFlags,
-        redFlagsJson: output.redFlags,
-        lastMessageExcerpt: latestMessage,
-        lastAnalyzedConversationId: conversation?.id ?? null,
-        relationshipNarrative: output.relationshipNarrative,
-        narrativeLanguage: language,
-        narrativeUpdatedAt: new Date(),
-      },
+    const records = imports.flatMap((item) => {
+      const evidence = readWhatsAppEvidence(item.evidenceJson);
+      if (item.evidenceJson && (!evidence || evidence.coverage.analyzedChunkCount !== evidence.coverage.chunkCount)) {
+        throw new AppError("WhatsApp evidence is incomplete.", 422, undefined, "WHATSAPP_EVIDENCE_INCOMPLETE", true);
+      }
+      return evidence && evidence.coverage.analyzedChunkCount === evidence.coverage.chunkCount ? [evidence] : [];
     });
+    if (importJob && !records.some((record) => record.importId === importJob.id)) {
+      throw new AppError("WhatsApp evidence is incomplete.", 422, undefined, "WHATSAPP_EVIDENCE_INCOMPLETE", true);
+    }
+    const config = { apiKey: env.OPENAI_API_KEY, agentId: env.OPENAI_PERSONA_AGENT_ID };
+    const output = records.length
+      ? await personaInsightInference.runDeep({
+          ...payload,
+          event: "persona.insights.refresh",
+          responseContract: { ...payload.responseContract, personaMemory: "Return the required evidence-backed relationshipType, intimacy, currentTopics, facts, openQuestions and adviceContext. All sourceRefs must refer to supplied WhatsApp message IDs; never swap user/persona roles." },
+          type: { task: WHATSAPP_ANALYSIS_TASK, stage: "synthesize", version: 1 },
+          evidence: { ...payload.evidence,
+            // Do not present old analysis of the same import as independent evidence.
+            whatsappSummaries: imports.filter((item) => !records.some((record) => record.importId === item.id)).map((item) => item.derivedSummary).filter(Boolean),
+            whatsappRecords: records,
+          },
+        }, config, whatsappDeepOutputSchema)
+      : await personaInsightInference.run(payload, config);
+    if ("personaMemory" in output) {
+      try {
+        const memory = whatsappMemorySchema.parse(output.personaMemory);
+        assertKnownSources(memory, new Set(records.flatMap((record) => record.chunks.flatMap((chunk) => chunk.analysis.observations.flatMap((observation) => observation.sourceRefs)))));
+        if (memory.relationshipType.value !== "unclear" && !memory.relationshipType.sourceRefs.length) throw new Error("Missing evidence");
+      } catch { throw new AppError("WhatsApp analysis contains invalid evidence references.", 502, undefined, "WHATSAPP_IMPORT_ANALYSIS_INVALID", true); }
+    }
+    await aiConsentService.requireActive(userId);
+    const insight = await personaInsightRepository.save({ userId, personaId, language, snapshotAt, output,
+      latestMessage, conversationId: conversation?.id ?? null, sourceImportIds: imports.map((item) => item.id), importJob });
 
     return {
+      personaMemory: insight.personaMemoryJson,
       summary: insight.summary,
       confidence: insight.confidence,
       communicationStyle: insight.communicationStyle,

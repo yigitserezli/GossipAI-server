@@ -8,6 +8,7 @@ const tick = async () => {
   if (running) return;
   running = true;
   try {
+    await personaWhatsAppImportService.cleanupCompleted();
     // Claimed rows are durable; after a restart the next tick simply resumes them.
     for (let index = 0; index < 3; index += 1) {
       if (!(await personaWhatsAppImportService.processNext())) break;

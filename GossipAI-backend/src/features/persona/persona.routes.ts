@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { authenticate } from "../../shared/middlewares/authenticate";
 import { validateBody } from "../../shared/middlewares/validate-body";
-import { answerPersonaCharacterAnalysis, createPersona, createPersonaAvatarUploadUrl, createWhatsAppImport, createWhatsAppImportUploadUrl, deletePersona, getPersona, getPersonaCharacterAnalysis, listPersonas, listWhatsAppImports, refreshPersonaInsights, refreshRelationshipAnalysis, startPersonaCharacterAnalysis, updatePersona } from "./persona.controller";
-import { characterAnalysisAnswerSchema, createPersonaAvatarUploadUrlSchema, createPersonaSchema, createWhatsAppImportSchema, createWhatsAppImportUploadUrlSchema, refreshPersonaInsightsSchema, updatePersonaSchema } from "./persona.schema";
+import { confirmWhatsAppParticipants, retryWhatsAppImport, answerPersonaCharacterAnalysis, createPersona, createPersonaAvatarUploadUrl, createWhatsAppImport, createWhatsAppImportUploadUrl, deletePersona, getPersona, getPersonaCharacterAnalysis, listPersonas, listWhatsAppImports, refreshPersonaInsights, refreshRelationshipAnalysis, startPersonaCharacterAnalysis, updatePersona } from "./persona.controller";
+import { confirmWhatsAppParticipantsSchema, characterAnalysisAnswerSchema, createPersonaAvatarUploadUrlSchema, createPersonaSchema, createWhatsAppImportSchema, createWhatsAppImportUploadUrlSchema, refreshPersonaInsightsSchema, updatePersonaSchema } from "./persona.schema";
 
 const personaRouter = Router();
 personaRouter.use(authenticate);
@@ -20,4 +20,6 @@ personaRouter.post("/:id/relationship-analysis", refreshRelationshipAnalysis);
 personaRouter.post("/:id/whatsapp-imports/upload-url", validateBody(createWhatsAppImportUploadUrlSchema), createWhatsAppImportUploadUrl);
 personaRouter.post("/:id/whatsapp-imports", validateBody(createWhatsAppImportSchema), createWhatsAppImport);
 personaRouter.get("/:id/whatsapp-imports", listWhatsAppImports);
+personaRouter.post("/:id/whatsapp-imports/:importId/participants", validateBody(confirmWhatsAppParticipantsSchema), confirmWhatsAppParticipants);
+personaRouter.post("/:id/whatsapp-imports/:importId/retry", retryWhatsAppImport);
 export default personaRouter;
